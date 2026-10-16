@@ -2,23 +2,21 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#B87D7D">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Beauty Agenda</title>
     
-    <!-- Font e Icone -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Librerie Esterne -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <style>
-        /* ========== VARIABILI ========== */
         :root {
             --primary: #B87D7D;
             --primary-dark: #8B5A5A;
@@ -36,48 +34,43 @@
             --radius: 16px;
         }
 
-        /* ========== BASE ========== */
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
-        html, body { max-width: 100%; }
-        body { background: var(--bg); color: var(--text); line-height: 1.6; padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px)); }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+        html, body { max-width: 100%; overflow-x: hidden; }
+        body { background: var(--bg); color: var(--text); line-height: 1.6; padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); -webkit-font-smoothing: antialiased; }
         h1, h2, h3, h4 { font-family: 'Playfair Display', serif; font-weight: 600; color: var(--text); }
         img { max-width: 100%; }
-        button { font-family: inherit; }
+        button { font-family: inherit; cursor: pointer; }
         i { line-height: 1; }
 
-        /* ========== HEADER ========== */
         .app-header { background: linear-gradient(135deg, var(--white), var(--primary-light)); padding: 16px 20px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 30; border-bottom: 1px solid var(--border); box-shadow: 0 2px 10px rgba(139,90,90,.10); }
         .app-logo { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-dark); }
         .app-header h1 { font-size: 1.4rem; color: var(--primary-dark); letter-spacing: .4px; }
 
-        /* ========== LAYOUT ========== */
         .app-content { padding: 20px 16px; max-width: 1100px; margin: 0 auto; }
         .view { display: none; }
         .view.active { display: block; animation: fadeIn .25s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-        .view-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 18px; }
+        .view-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
         .view-header h2 { font-size: 1.35rem; display: flex; align-items: center; gap: 10px; min-width: 0; }
         .view-header h2 i { color: var(--primary-dark); flex-shrink: 0; }
         .header-actions { display: flex; gap: 8px; flex-shrink: 0; }
         .header-actions label.btn-icon { cursor: pointer; }
 
-        /* ========== BOTTONI ========== */
-        .btn-primary, .btn-secondary { width: 100%; padding: 13px 16px; border-radius: 12px; font-size: .95rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; transition: all .2s; text-align: center; }
+        .btn-primary, .btn-secondary { width: 100%; padding: 13px 16px; border-radius: 12px; font-size: .95rem; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; transition: all .2s; text-align: center; }
         .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; border: none; box-shadow: 0 3px 10px rgba(139,90,90,.25); }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(139,90,90,.35); }
+        .btn-primary:active { transform: scale(0.98); }
         .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
-        .btn-secondary:hover { background: var(--primary-light); }
+        .btn-secondary:active { background: var(--primary-light); }
 
-        .btn-icon { background: #fff; border: 1px solid var(--border); width: 42px; height: 42px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--primary-dark); transition: all .2s; flex-shrink: 0; }
-        .btn-icon:hover { background: var(--primary-light); border-color: var(--primary); }
+        .btn-icon { background: #fff; border: 1px solid var(--border); width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--primary-dark); transition: all .2s; flex-shrink: 0; }
+        .btn-icon:active { background: var(--primary-light); }
 
-        /* ========== FORM ========== */
         .appt-form { background: #fff; padding: 22px; border-radius: var(--radius); box-shadow: 0 2px 10px rgba(0,0,0,.06); margin-top: 16px; }
         .form-group { margin-bottom: 18px; min-width: 0; }
         .form-group label { display: flex; align-items: center; gap: 8px; font-weight: 500; font-size: .9rem; margin-bottom: 8px; color: var(--text); }
         .form-group label i { color: var(--primary-dark); }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 14px; font-size: 1rem; border: 1px solid var(--border); border-radius: 10px; background: #fff; color: var(--text); }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 14px; font-size: 16px; border: 1px solid var(--border); border-radius: 10px; background: #fff; color: var(--text); -webkit-appearance: none; }
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary-dark); box-shadow: 0 0 0 3px var(--primary-light); }
         .form-group small { display: block; margin-top: 6px; color: var(--muted); font-size: .8rem; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -86,21 +79,19 @@
 
         .location-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .location-option input { display: none; }
-        .location-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 8px; border: 2px solid var(--border); border-radius: 12px; cursor: pointer; font-weight: 500; font-size: .88rem; transition: all .2s; text-align: center; }
+        .location-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 8px; border: 2px solid var(--border); border-radius: 12px; font-weight: 500; font-size: .88rem; transition: all .2s; text-align: center; }
         .location-option input:checked + .location-btn.in { background: var(--sage); border-color: var(--sage); color: #fff; }
         .location-option input:checked + .location-btn.out { background: var(--primary); border-color: var(--primary); color: #fff; }
 
-        .search-input { width: 100%; padding: 12px 14px; font-size: 1rem; border: 1px solid var(--border); border-radius: 12px; background: #fff; margin-bottom: 18px; }
+        .search-input { width: 100%; padding: 12px 14px; font-size: 16px; border: 1px solid var(--border); border-radius: 12px; background: #fff; margin-bottom: 18px; }
         .search-input:focus { outline: none; border-color: var(--primary-dark); box-shadow: 0 0 0 3px var(--primary-light); }
 
-        /* ========== CARD ========== */
         .cards-container { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; }
         .appt-card { background: #fff; padding: 16px; border-radius: var(--radius); border-left: 5px solid var(--primary); box-shadow: 0 2px 10px rgba(0,0,0,.06); position: relative; transition: all .2s; min-width: 0; }
-        .appt-card:hover { box-shadow: 0 5px 16px rgba(0,0,0,.10); transform: translateY(-2px); }
         .appt-card.past { opacity: .55; filter: grayscale(35%); }
         .appt-card.past .appt-client { text-decoration: line-through; color: var(--muted); }
 
-        .appt-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .appt-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
         .appt-client-row { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; }
         .client-color-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
         .appt-client { font-weight: 500; font-size: 1rem; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -109,10 +100,9 @@
         .appt-badge.out { background: var(--primary); }
 
         .appt-actions { display: flex; gap: 6px; flex-shrink: 0; }
-        .appt-action-btn, .appt-menu-btn { width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg); color: var(--primary-dark); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: .85rem; transition: all .2s; }
-        .appt-action-btn:hover, .appt-menu-btn:hover { background: var(--primary-light); }
+        .appt-action-btn, .appt-menu-btn { width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg); color: var(--primary-dark); display: flex; align-items: center; justify-content: center; font-size: .85rem; transition: all .2s; }
         .appt-action-btn.whatsapp { color: #128C7E; }
-        .appt-action-btn.whatsapp:hover { background: #DCF8C6; }
+        .appt-action-btn.whatsapp:active { background: #DCF8C6; }
 
         .appt-date { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .85rem; margin-bottom: 8px; flex-wrap: wrap; }
         .appt-treatments { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: .88rem; flex-wrap: wrap; }
@@ -120,28 +110,25 @@
 
         .appt-menu { display: none; position: absolute; top: 52px; right: 14px; z-index: 40; background: #fff; border-radius: 12px; min-width: 160px; box-shadow: 0 6px 20px rgba(0,0,0,.18); overflow: hidden; }
         .appt-menu.open { display: block; }
-        .appt-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 16px; background: none; border: none; text-align: left; font-size: .9rem; color: var(--text); cursor: pointer; }
-        .appt-menu-item:hover { background: var(--primary-light); }
+        .appt-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 16px; background: none; border: none; text-align: left; font-size: .9rem; color: var(--text); }
+        .appt-menu-item:active { background: var(--primary-light); }
         .appt-menu-item.danger { color: #C0392B; }
-        .appt-menu-item.danger:hover { background: #FADBD8; }
+        .appt-menu-item.danger:active { background: #FADBD8; }
 
-        /* ========== CALENDARIO ========== */
         .calendar-view-toggle { display: flex; gap: 6px; background: #fff; padding: 6px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.06); margin: 16px 0; }
-        .view-toggle-btn { flex: 1; padding: 11px 6px; border: none; border-radius: 9px; background: transparent; color: var(--muted); font-weight: 500; font-size: .88rem; cursor: pointer; transition: all .2s; }
+        .view-toggle-btn { flex: 1; padding: 11px 6px; border: none; border-radius: 9px; background: transparent; color: var(--muted); font-weight: 500; font-size: .88rem; }
         .view-toggle-btn.active { background: var(--primary-dark); color: #fff; }
 
         .calendar-nav { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: #fff; padding: 12px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
-        .cal-nav-btn { width: 38px; height: 38px; border: none; border-radius: 50%; background: var(--primary-light); color: var(--primary-dark); cursor: pointer; flex-shrink: 0; }
-        .cal-nav-btn:hover { background: var(--primary-dark); color: #fff; }
+        .cal-nav-btn { width: 38px; height: 38px; border: none; border-radius: 50%; background: var(--primary-light); color: var(--primary-dark); flex-shrink: 0; }
         #cal-title { font-size: 1.05rem; text-align: center; }
 
         .calendar-month { background: #fff; padding: 12px; border-radius: var(--radius); box-shadow: 0 2px 10px rgba(0,0,0,.06); }
         .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: .72rem; font-weight: 600; color: var(--muted); padding: 8px 0; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
         .calendar-weekdays .weekend-day { color: var(--primary-dark); }
         .calendar-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-        .cal-day { min-height: 44px; padding: 4px 2px; border-radius: 9px; background: var(--bg); border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; font-size: .82rem; cursor: pointer; transition: all .15s; }
-        .cal-day:hover { background: var(--primary-light); }
-        .cal-day.other-month { background: transparent; color: #CFC6C0; cursor: default; }
+        .cal-day { min-height: 44px; padding: 4px 2px; border-radius: 9px; background: var(--bg); border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; font-size: .82rem; }
+        .cal-day.other-month { background: transparent; color: #CFC6C0; }
         .cal-day.weekend { background: var(--weekend); color: var(--primary-dark); }
         .cal-day.holiday { background: var(--accent-light); border-color: var(--accent); }
         .cal-day.has-appts { box-shadow: inset 0 0 0 2px var(--primary); }
@@ -150,31 +137,27 @@
         .appt-dots { display: flex; gap: 2px; flex-wrap: wrap; justify-content: center; margin-top: 3px; }
         .appt-dot { width: 5px; height: 5px; border-radius: 50%; }
 
-        .calendar-week { background: #fff; padding: 12px; border-radius: var(--radius); box-shadow: 0 2px 10px rgba(0,0,0,.06); overflow-x: auto; }
+        .calendar-week { background: #fff; padding: 12px; border-radius: var(--radius); box-shadow: 0 2px 10px rgba(0,0,0,.06); overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .week-grid { display: grid; grid-template-columns: repeat(7, minmax(85px, 1fr)); gap: 6px; }
         .week-day-col { background: var(--bg); border-radius: 10px; padding: 8px; min-height: 280px; }
         .week-day-col.weekend { background: var(--weekend); }
         .week-day-col.holiday { background: var(--accent-light); border: 2px solid var(--accent); }
         .week-day-header { text-align: center; font-weight: 600; font-size: .8rem; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
         .week-day-header.today, .week-day-header.weekend { color: var(--primary-dark); }
-        .week-appt { background: #fff; padding: 7px 6px; border-radius: 8px; border-left: 3px solid var(--primary); margin-bottom: 7px; font-size: .72rem; overflow-wrap: anywhere; cursor: pointer; transition: all .2s; }
-        .week-appt:hover { transform: translateX(2px); box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+        .week-appt { background: #fff; padding: 7px 6px; border-radius: 8px; border-left: 3px solid var(--primary); margin-bottom: 7px; font-size: .72rem; overflow-wrap: anywhere; }
         .week-appt-time { font-weight: 600; margin-bottom: 3px; }
 
         .calendar-day { background: #fff; padding: 18px; border-radius: var(--radius); box-shadow: 0 2px 10px rgba(0,0,0,.06); }
         .day-header { text-align: center; font-size: 1.2rem; color: var(--primary-dark); padding-bottom: 14px; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
         .day-header.holiday { color: var(--accent); border-bottom: 2px solid var(--accent); }
-        .day-appt { display: flex; gap: 12px; padding: 14px; background: var(--bg); border-radius: 12px; border-left: 4px solid var(--primary); margin-bottom: 10px; cursor: pointer; transition: all .2s; }
-        .day-appt:hover { transform: translateX(4px); box-shadow: 0 3px 10px rgba(0,0,0,.1); }
+        .day-appt { display: flex; gap: 12px; padding: 14px; background: var(--bg); border-radius: 12px; border-left: 4px solid var(--primary); margin-bottom: 10px; }
         .day-appt-time { font-weight: 600; min-width: 82px; font-size: .95rem; }
         .day-appt-info { flex: 1; min-width: 0; }
         .day-appt-client { display: flex; align-items: center; gap: 8px; font-weight: 500; margin-bottom: 4px; flex-wrap: wrap; }
         .day-appt-treatment { font-size: .85rem; color: var(--muted); }
         .no-appts { text-align: center; padding: 40px 15px; color: var(--muted); }
 
-        /* ========== CLIENTI ========== */
-        .client-card { background: #fff; padding: 16px; border-radius: var(--radius); box-shadow: 0 2px 10px rgba(0,0,0,.06); cursor: pointer; transition: all .2s; }
-        .client-card:hover { transform: translateY(-2px); box-shadow: 0 5px 16px rgba(0,0,0,.1); }
+        .client-card { background: #fff; padding: 16px; border-radius: var(--radius); box-shadow: 0 2px 10px rgba(0,0,0,.06); }
         .client-card-name { font-weight: 500; font-size: 1.05rem; margin-bottom: 6px; }
         .client-card-info { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--muted); margin-bottom: 3px; overflow-wrap: anywhere; }
         .client-card-info i { width: 15px; color: var(--primary-dark); flex-shrink: 0; }
@@ -186,7 +169,6 @@
         .client-detail-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
         .client-detail-actions > button { width: auto; flex: 1 1 calc(50% - 5px); min-width: 0; margin-top: 0; padding: 11px 10px; font-size: .85rem; }
 
-        /* ========== TRATTAMENTI ========== */
         .treatment-card { display: flex; align-items: center; gap: 10px; background: #fff; padding: 16px; border-radius: var(--radius); border-left: 5px solid var(--primary); box-shadow: 0 2px 10px rgba(0,0,0,.06); }
         .treatment-color-preview { width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0; }
         .treatment-info { flex: 1; min-width: 0; }
@@ -194,9 +176,8 @@
         .treatment-meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: .8rem; color: var(--muted); }
         .treatment-meta i { color: var(--primary-dark); }
 
-        /* ========== MANAGEMENT ========== */
         .management-tabs { display: flex; gap: 6px; background: #fff; padding: 6px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.06); margin-bottom: 20px; }
-        .mgmt-tab-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 8px; border: none; border-radius: 9px; background: transparent; color: var(--muted); font-weight: 500; font-size: .88rem; cursor: pointer; }
+        .mgmt-tab-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 8px; border: none; border-radius: 9px; background: transparent; color: var(--muted); font-weight: 500; font-size: .88rem; }
         .mgmt-tab-btn.active { background: var(--primary-dark); color: #fff; }
         .mgmt-tab-content { display: none; }
         .mgmt-tab-content.active { display: block; }
@@ -207,7 +188,6 @@
         .login-box p { color: var(--muted); margin-bottom: 20px; font-size: .9rem; }
         .error-text { color: #C0392B; font-size: .85rem; margin-top: 12px; }
 
-        /* ========== TEMPLATE MESSAGGI ========== */
         .message-template-card { background: #fff; padding: 18px; border-radius: var(--radius); border-left: 5px solid var(--accent); box-shadow: 0 2px 10px rgba(0,0,0,.06); }
         .message-template-name { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 500; font-size: 1rem; margin-bottom: 8px; }
         .message-template-dates { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--muted); margin-bottom: 10px; }
@@ -217,9 +197,8 @@
         .template-active { background: var(--sage-light); color: var(--sage); padding: 3px 8px; border-radius: 12px; font-size: .72rem; font-weight: 600; }
         .template-inactive { background: #EFEFEF; color: #9CA3AF; padding: 3px 8px; border-radius: 12px; font-size: .72rem; font-weight: 600; }
 
-        /* ========== STATISTICHE ========== */
         .filters { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0; }
-        .filters select { flex: 1 1 140px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: #fff; font-size: .95rem; }
+        .filters select { flex: 1 1 140px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: #fff; font-size: 16px; }
         .stats-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 20px; }
         .stat-card { background: #fff; padding: 22px; border-radius: var(--radius); text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
         .stat-card.highlight { background: linear-gradient(135deg, var(--primary-light), var(--accent-light)); border: 2px solid var(--primary-dark); }
@@ -227,38 +206,42 @@
         .stat-value { display: block; font-family: 'Playfair Display', serif; font-size: 1.7rem; font-weight: 600; color: var(--primary-dark); }
         .stat-sub { display: block; font-size: .78rem; font-style: italic; color: var(--muted); margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border); }
 
-        /* ========== MODAL ========== */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
         .modal.open { display: flex; }
         .modal-content { background: #fff; padding: 24px; border-radius: var(--radius); width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto; }
         .modal-content h3 { display: flex; align-items: center; gap: 10px; color: var(--primary-dark); margin-bottom: 14px; font-size: 1.25rem; }
         .modal-content p { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
         .modal-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
-        .reminder-textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: .95rem; min-height: 150px; resize: vertical; }
-        .reminder-textarea:focus { outline: none; border-color: #128C7E; box-shadow: 0 0 0 3px rgba(18,140,126,.15); }
+        .reminder-textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 16px; min-height: 150px; resize: vertical; }
         .export-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
-        .export-btn { padding: 13px; border: 1px solid var(--primary-dark); border-radius: 12px; background: var(--primary-light); color: var(--primary-dark); font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .export-btn:hover { background: var(--primary-dark); color: #fff; }
+        .export-btn { padding: 13px; border: 1px solid var(--primary-dark); border-radius: 12px; background: var(--primary-light); color: var(--primary-dark); font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 10px; }
 
-        /* ========== NAVIGAZIONE ========== */
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; display: flex; gap: 2px; padding: 10px 4px calc(10px + env(safe-area-inset-bottom, 0px)); background: #fff; border-top: 1px solid var(--border); box-shadow: 0 -2px 12px rgba(0,0,0,.07); }
-        .nav-btn { flex: 1; min-width: 0; background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 2px; color: var(--muted); font-size: .62rem; transition: color .2s; }
-        .nav-btn .icon { font-size: 1.15rem; transition: transform .2s; }
+        .nav-btn { flex: 1; min-width: 0; background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 2px; color: var(--muted); font-size: .62rem; }
+        .nav-btn .icon { font-size: 1.15rem; }
         .nav-btn.active { color: var(--primary-dark); font-weight: 600; }
         .nav-btn.active .icon { transform: scale(1.12); }
         .nav-btn span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        /* Loading overlay */
         #loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,.9); z-index: 200; align-items: center; justify-content: center; flex-direction: column; gap: 15px; }
         #loading-overlay.active { display: flex; }
         .spinner { width: 40px; height: 40px; border: 4px solid var(--primary-light); border-top-color: var(--primary-dark); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ========== RESPONSIVE ========== */
         @media (min-width: 480px) { .cal-day { aspect-ratio: 1; min-height: 0; } .app-content { padding: 24px; } }
-        @media (min-width: 768px) {
+        @media (min-width: 768px) and (max-width: 1024px) {
             body { padding-bottom: 0; padding-left: 220px; }
             .bottom-nav { flex-direction: column; top: 0; bottom: 0; left: 0; right: auto; width: 220px; padding: 28px 0; gap: 6px; border-top: none; border-right: 1px solid var(--border); box-shadow: 2px 0 12px rgba(0,0,0,.06); }
+            .nav-btn { flex-direction: row; justify-content: flex-start; padding: 14px 26px; gap: 14px; font-size: .95rem; }
+            .nav-btn .icon { font-size: 1.25rem; }
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+            .app-content { padding: 28px; }
+            .view-header h2 { font-size: 1.6rem; }
+            .client-detail-actions > button { flex: 1 1 auto; }
+        }
+        @media (min-width: 1025px) {
+            body { padding-bottom: 0; padding-left: 240px; }
+            .bottom-nav { flex-direction: column; top: 0; bottom: 0; left: 0; right: auto; width: 240px; padding: 28px 0; gap: 6px; border-top: none; border-right: 1px solid var(--border); box-shadow: 2px 0 12px rgba(0,0,0,.06); }
             .nav-btn { flex-direction: row; justify-content: flex-start; padding: 14px 26px; gap: 14px; font-size: .95rem; }
             .nav-btn .icon { font-size: 1.25rem; }
             .stats-grid { grid-template-columns: repeat(3, 1fr); }
@@ -271,7 +254,6 @@
 </head>
 <body>
 
-    <!-- LOADING -->
     <div id="loading-overlay" class="active">
         <div class="spinner"></div>
         <p style="color:var(--muted);">Connessione a Firebase...</p>
@@ -283,22 +265,17 @@
     </header>
 
     <main class="app-content">
-        <!-- AGENDA -->
         <section id="view-agenda" class="view active">
             <div class="view-header">
                 <h2><i class="fas fa-calendar-alt"></i> Appuntamenti</h2>
                 <div class="header-actions">
-                    <label class="btn-icon" title="Importa appuntamenti">
-                        <i class="fas fa-file-import"></i>
-                        <input type="file" id="import-appointments-file" accept=".xlsx,.xls,.csv" style="display:none;">
-                    </label>
+                    <label class="btn-icon" title="Importa appuntamenti"><i class="fas fa-file-import"></i><input type="file" id="import-appointments-file" accept=".xlsx,.xls,.csv" style="display:none;"></label>
                     <button id="btn-export-calendar" class="btn-icon" title="Esporta calendario"><i class="fas fa-file-export"></i></button>
                 </div>
             </div>
             <div id="appointments-list" class="cards-container"></div>
         </section>
 
-        <!-- CALENDARIO -->
         <section id="view-calendar" class="view">
             <h2><i class="fas fa-calendar"></i> Calendario</h2>
             <div class="calendar-view-toggle">
@@ -314,7 +291,6 @@
             <div id="calendar-container"></div>
         </section>
 
-        <!-- NUOVO / MODIFICA APPUNTAMENTO -->
         <section id="view-new" class="view">
             <div class="view-header">
                 <h2 id="form-title"><i class="fas fa-plus-circle"></i> Nuovo Appuntamento</h2>
@@ -339,14 +315,8 @@
                     <select id="form-treatment-3"><option value="">Nessun terzo trattamento</option></select>
                 </div>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label for="form-date"><i class="fas fa-calendar-day"></i> Data</label>
-                        <input type="date" id="form-date" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="form-time"><i class="fas fa-clock"></i> Ora</label>
-                        <input type="time" id="form-time" required>
-                    </div>
+                    <div class="form-group"><label for="form-date"><i class="fas fa-calendar-day"></i> Data</label><input type="date" id="form-date" required></div>
+                    <div class="form-group"><label for="form-time"><i class="fas fa-clock"></i> Ora</label><input type="time" id="form-time" required></div>
                 </div>
                 <div class="form-group">
                     <label><i class="fas fa-map-marker-alt"></i> Luogo</label>
@@ -360,7 +330,6 @@
             </form>
         </section>
 
-        <!-- ANAGRAFICA CLIENTI -->
         <section id="view-clients" class="view">
             <div class="view-header">
                 <h2><i class="fas fa-users"></i> Anagrafica Clienti</h2>
@@ -401,7 +370,6 @@
             </div>
         </section>
 
-        <!-- STATISTICHE -->
         <section id="view-stats" class="view">
             <h2><i class="fas fa-chart-bar"></i> Statistiche e Previsioni</h2>
             <div class="filters">
@@ -415,7 +383,6 @@
             </div>
         </section>
 
-        <!-- MANAGEMENT -->
         <section id="view-management" class="view">
             <div id="management-login" class="login-box">
                 <div class="login-icon"><i class="fas fa-heart"></i></div>
@@ -491,7 +458,6 @@
         <button class="nav-btn" data-target="view-management"><i class="fas fa-heart icon"></i><span>M</span></button>
     </nav>
 
-    <!-- MODALS -->
     <div id="export-modal" class="modal">
         <div class="modal-content">
             <h3><i class="fas fa-file-export"></i> Esporta Calendario</h3>
@@ -531,14 +497,7 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- JAVASCRIPT LOGIC -->
-    <!-- ========================================== -->
     <script>
-        // ==========================================
-        // 🔥 1. CONFIGURAZIONE FIREBASE 🔥
-        // SOSTITUISCI QUESTO BLOCCO CON I TUOI DATI REALI DI FIREBASE CONSOLE
-        // ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyDt3A_gR_uTdzB4pbJzXQOFESL1LM75ihg",
   authDomain: "agenda-mc-97a20.firebaseapp.com",
@@ -548,7 +507,7 @@ const firebaseConfig = {
   appId: "1:639380268664:web:a3c602217ef6f3db452f8d"
 };
 
-        const ADMIN_PASSWORD = "admin123"; // ⚠️ CAMBIARE
+        const ADMIN_PASSWORD = "admin123";
         
         let db;
         let clients = [], treatments = [], appointments = [], messageTemplates = [];
@@ -556,12 +515,8 @@ const firebaseConfig = {
         let managementUnlocked = false;
         let currentAppointmentDetailId = null;
 
-        // ==========================================
-        // 🔥 2. INIZIALIZZAZIONE FIREBASE 🔥
-        // ==========================================
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                // Controllo sicurezza: se la chiave è ancora quella di default, blocca
                 if (firebaseConfig.apiKey === "INSERISCI_QUI_LA_TUA_API_KEY_REALE" || firebaseConfig.apiKey === "LA_TUA_API_KEY_QUI") {
                     throw new Error("API Key non configurata. Modifica il blocco 'firebaseConfig' nel codice.");
                 }
@@ -569,7 +524,6 @@ const firebaseConfig = {
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
 
-                // Test di connessione semplice
                 await db.collection('clients').limit(1).get();
                 console.log("✅ Firebase connesso con successo!");
                 
@@ -581,19 +535,11 @@ const firebaseConfig = {
                         <i class="fas fa-exclamation-triangle" style="font-size:3rem; margin-bottom:15px;"></i>
                         <h3>Errore di connessione</h3>
                         <p style="margin:15px 0; font-size:0.9rem;">${error.message}</p>
-                        <p style="font-size:0.85rem; color:#6B6B6B;">
-                            1. Hai inserito la tua vera <code>firebaseConfig</code>?<br>
-                            2. Le regole di Firestore sono in modalità test?<br>
-                            3. Stai usando un server locale (es. Live Server)?
-                        </p>
                     </div>
                 `;
             }
         });
 
-        // ==========================================
-        // 🔥 3. FUNZIONI HELPER 🔥
-        // ==========================================
         function formatDate(date) {
             const y = date.getFullYear(), m = String(date.getMonth() + 1).padStart(2, '0'), d = String(date.getDate()).padStart(2, '0');
             return `${y}-${m}-${d}`;
@@ -658,9 +604,6 @@ const firebaseConfig = {
         function isWeekend(date) { const d = date.getDay(); return d === 0 || d === 6; }
         function showLoading(show) { document.getElementById('loading-overlay').classList.toggle('active', show); }
 
-        // ==========================================
-        // 🔥 4. FIREBASE CRUD 🔥
-        // ==========================================
         async function loadAllData() {
             showLoading(true);
             try {
@@ -675,12 +618,16 @@ const firebaseConfig = {
                 appointments = aSnap.docs.map(d => ({ id: d.id, ...d.data() }));
                 messageTemplates = mSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-                // Compatibilità multi-trattamento
                 appointments.forEach(a => {
                     if (!Array.isArray(a.treatmentIds)) {
                         a.treatmentIds = a.treatmentId ? [a.treatmentId] : [];
                     }
                 });
+
+                // Crea template di default se la collezione è vuota
+                if (messageTemplates.length === 0) {
+                    await seedDefaultTemplates();
+                }
                 
                 showLoading(false);
                 renderAll();
@@ -689,6 +636,42 @@ const firebaseConfig = {
                 console.error("Errore caricamento dati:", err);
                 alert("Errore nel caricamento dei dati. Controlla la Console (F12).");
             }
+        }
+
+        async function seedDefaultTemplates() {
+            const defaultTemplates = [
+                {
+                    name: 'Standard IN',
+                    content: 'Ciao {nome}! ✨\n\nTi ricordo il tuo appuntamento per {trattamento} {data} {ora} in studio.\n\nTi aspetto! {emoji}\n\nPer eventuali modifiche rispondi a questo messaggio.',
+                    startDate: '',
+                    endDate: ''
+                },
+                {
+                    name: 'Standard OUT',
+                    content: 'Ciao {nome}! ✨\n\nTi ricordo il tuo appuntamento per {trattamento} {data} {ora} a domicilio.\n\nTi aspetto! {emoji}\n\nPer eventuali modifiche rispondi a questo messaggio.',
+                    startDate: '',
+                    endDate: ''
+                },
+                {
+                    name: 'Halloween 2026',
+                    content: '🎃 Ciao {nome}!\n\nPreparati per un appuntamento da brivido! {trattamento} {data} {ora} {luogo}.\n\nNon mancare! ✨',
+                    startDate: '2026-10-20',
+                    endDate: '2026-10-31'
+                },
+                {
+                    name: 'Natale 2026',
+                    content: '🎄 Ciao {nome}!\n\nRegalati un momento di benessere! {trattamento} {data} {ora} {luogo}.\n\nBuone feste! 🎄✨',
+                    startDate: '2026-12-01',
+                    endDate: '2026-12-31'
+                }
+            ];
+
+            for (const template of defaultTemplates) {
+                await db.collection('messageTemplates').add(template);
+            }
+            
+            console.log("✅ Template di default creati automaticamente");
+            messageTemplates = defaultTemplates.map((t, i) => ({ id: `auto_${i}`, ...t }));
         }
 
         async function saveClient(data, id = null) {
@@ -728,9 +711,6 @@ const firebaseConfig = {
             await loadAllData();
         }
 
-        // ==========================================
-        // 🔥 5. NAVIGAZIONE 🔥
-        // ==========================================
         const navButtons = document.querySelectorAll('.nav-btn');
         const views = document.querySelectorAll('.view');
 
@@ -756,15 +736,12 @@ const firebaseConfig = {
         navButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const target = btn.dataset.target;
-                if (target !== 'view-management') managementUnlocked = false; // Blocca M quando si cambia sezione
+                if (target !== 'view-management') managementUnlocked = false;
                 if (target === 'view-new') resetForm();
                 showView(target);
             });
         });
 
-        // ==========================================
-        // 🔥 6. RENDERING VISTE 🔥
-        // ==========================================
         function renderAll() {
             renderAppointments();
             populateFormSelects();
@@ -827,7 +804,6 @@ const firebaseConfig = {
                 list.appendChild(card);
             });
 
-            // Event Listeners Agenda
             document.querySelectorAll('.appt-action-btn.whatsapp').forEach(btn => {
                 btn.addEventListener('click', (e) => { e.stopPropagation(); openReminderModal(btn.dataset.id); });
             });
@@ -853,9 +829,6 @@ const firebaseConfig = {
             });
         }
 
-        // ==========================================
-        // 🔥 7. MODAL WHATSAPP 🔥
-        // ==========================================
         let currentReminderApptId = null;
         function openReminderModal(apptId) {
             const appt = appointments.find(a => a.id === apptId);
@@ -934,9 +907,6 @@ const firebaseConfig = {
             currentReminderApptId = null;
         });
 
-        // ==========================================
-        // 🔥 8. CALENDARIO 🔥
-        // ==========================================
         let currentCalDate = new Date();
         let currentCalView = 'month';
 
@@ -1167,9 +1137,6 @@ const firebaseConfig = {
             if (appt) openEditForm(appt);
         });
 
-        // ==========================================
-        // 🔥 9. FORM APPUNTAMENTO 🔥
-        // ==========================================
         function populateFormSelects() {
             const clientSelect = document.getElementById('form-client');
             clientSelect.innerHTML = '<option value="">Seleziona cliente...</option>';
@@ -1272,9 +1239,6 @@ const firebaseConfig = {
             else { showView('view-agenda'); }
         });
 
-        // ==========================================
-        // 🔥 10. CLIENTI 🔥
-        // ==========================================
         function renderClients(filter = '') {
             const list = document.getElementById('clients-list');
             list.innerHTML = '';
@@ -1430,7 +1394,6 @@ const firebaseConfig = {
             showClientsList(); renderClients(); populateFormSelects(); populateFilters();
         });
 
-        // Import Clienti
         document.getElementById('import-clients-file').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
@@ -1458,7 +1421,6 @@ const firebaseConfig = {
             reader.readAsArrayBuffer(file); e.target.value = '';
         });
 
-        // Import Appuntamenti
         document.getElementById('import-appointments-file').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
@@ -1478,7 +1440,7 @@ const firebaseConfig = {
                         const location = (row.Luogo || row.luogo || 'IN').toString().trim().toUpperCase();
 
                         if (!date || !time || !clientName || !treatment1) continue;
-                        date = parseDateIT(date); // Converte gg/mm/aaaa in aaaa-mm-gg
+                        date = parseDateIT(date);
 
                         const client = clients.find(c => getClientFullName(c).toLowerCase() === clientName.toLowerCase());
                         if (!client) continue;
@@ -1500,9 +1462,6 @@ const firebaseConfig = {
             reader.readAsArrayBuffer(file); e.target.value = '';
         });
 
-        // ==========================================
-        // 🔥 11. MANAGEMENT 🔥
-        // ==========================================
         document.getElementById('btn-management-login').addEventListener('click', () => {
             if (document.getElementById('management-password').value === ADMIN_PASSWORD) {
                 managementUnlocked = true;
@@ -1605,7 +1564,6 @@ const firebaseConfig = {
             renderTreatments(); populateFormSelects(); populateFilters();
         });
 
-        // Import Trattamenti
         document.getElementById('import-treatments-file').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
@@ -1634,7 +1592,6 @@ const firebaseConfig = {
             reader.readAsArrayBuffer(file); e.target.value = '';
         });
 
-        // Template Messaggi
         function renderMessageTemplates() {
             const list = document.getElementById('message-templates-list');
             list.innerHTML = '';
@@ -1707,9 +1664,6 @@ const firebaseConfig = {
             renderMessageTemplates();
         });
 
-        // ==========================================
-        // 🔥 12. EXPORT & STATS 🔥
-        // ==========================================
         document.getElementById('btn-export-calendar').addEventListener('click', () => document.getElementById('export-modal').classList.add('open'));
         document.getElementById('close-export-modal').addEventListener('click', () => document.getElementById('export-modal').classList.remove('open'));
         document.querySelectorAll('.export-btn').forEach(btn => {
