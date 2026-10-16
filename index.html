@@ -1,1 +1,2471 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#B87D7D">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <title>Beauty Agenda</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <!-- ========================================== -->
+    <!-- FIREBASE SDK (compat per semplicità)       -->
+    <!-- ========================================== -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <style>
+        /* ========== VARIABILI ========== */
+        :root{
+          --primary:#B87D7D;
+          --primary-dark:#8B5A5A;
+          --primary-light:#EAD5D5;
+          --accent:#A68A47;
+          --accent-light:#EDE3C8;
+          --sage:#7A8F6A;
+          --sage-light:#E0E7D8;
+          --bg:#FAF7F5;
+          --text:#2D2D2D;
+          --muted:#6B6B6B;
+          --border:#E5DDD8;
+          --white:#ffffff;
+          --weekend:#F5E6E0;
+          --radius:16px;
+        }
 
+        *{box-sizing:border-box;margin:0;padding:0;font-family:'Poppins',sans-serif;}
+        html,body{max-width:100%;}
+        body{background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:calc(78px + env(safe-area-inset-bottom,0px));}
+        h1,h2,h3,h4{font-family:'Playfair Display',serif;font-weight:600;color:var(--text);}
+        img{max-width:100%;}
+        button{font-family:inherit;}
+        i{line-height:1;}
+
+        .app-header{background:linear-gradient(135deg,var(--white),var(--primary-light));padding:16px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:30;border-bottom:1px solid var(--border);box-shadow:0 2px 10px rgba(139,90,90,.10);}
+        .app-logo{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--primary-dark);}
+        .app-header h1{font-size:1.4rem;color:var(--primary-dark);letter-spacing:.4px;}
+
+        .app-content{padding:20px 16px;max-width:1100px;margin:0 auto;}
+        .view{display:none;}
+        .view.active{display:block;animation:fadeIn .25s ease;}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+        .view-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:18px;}
+        .view-header h2{font-size:1.35rem;display:flex;align-items:center;gap:10px;min-width:0;}
+        .view-header h2 i{color:var(--primary-dark);flex-shrink:0;}
+        .header-actions{display:flex;gap:8px;flex-shrink:0;}
+        .header-actions label.btn-icon{cursor:pointer;}
+
+        .btn-primary,.btn-secondary{width:100%;padding:13px 16px;border-radius:12px;font-size:.95rem;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;transition:all .2s;text-align:center;}
+        .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border:none;box-shadow:0 3px 10px rgba(139,90,90,.25);}
+        .btn-primary:hover{transform:translateY(-2px);box-shadow:0 5px 14px rgba(139,90,90,.35);}
+        .btn-secondary{background:var(--bg);color:var(--text);border:1px solid var(--border);}
+        .btn-secondary:hover{background:var(--primary-light);}
+
+        .btn-icon{background:#fff;border:1px solid var(--border);width:42px;height:42px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--primary-dark);transition:all .2s;flex-shrink:0;}
+        .btn-icon:hover{background:var(--primary-light);border-color:var(--primary);}
+
+        .appt-form{background:#fff;padding:22px;border-radius:var(--radius);box-shadow:0 2px 10px rgba(0,0,0,.06);margin-top:16px;}
+        .form-group{margin-bottom:18px;min-width:0;}
+        .form-group label{display:flex;align-items:center;gap:8px;font-weight:500;font-size:.9rem;margin-bottom:8px;color:var(--text);}
+        .form-group label i{color:var(--primary-dark);}
+        .form-group input,.form-group select,.form-group textarea{width:100%;padding:12px 14px;font-size:1rem;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--text);}
+        .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary-dark);box-shadow:0 0 0 3px var(--primary-light);}
+        .form-group small{display:block;margin-top:6px;color:var(--muted);font-size:.8rem;}
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+        textarea{resize:vertical;font-family:inherit;}
+        input[type="color"]{height:48px;padding:4px;cursor:pointer;}
+
+        .location-toggle{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+        .location-option input{display:none;}
+        .location-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 8px;border:2px solid var(--border);border-radius:12px;cursor:pointer;font-weight:500;font-size:.88rem;transition:all .2s;text-align:center;}
+        .location-option input:checked + .location-btn.in{background:var(--sage);border-color:var(--sage);color:#fff;}
+        .location-option input:checked + .location-btn.out{background:var(--primary);border-color:var(--primary);color:#fff;}
+
+        .search-input{width:100%;padding:12px 14px;font-size:1rem;border:1px solid var(--border);border-radius:12px;background:#fff;margin-bottom:18px;}
+        .search-input:focus{outline:none;border-color:var(--primary-dark);box-shadow:0 0 0 3px var(--primary-light);}
+
+        .cards-container{display:flex;flex-direction:column;gap:14px;margin-top:14px;}
+        .appt-card{background:#fff;padding:16px;border-radius:var(--radius);border-left:5px solid var(--primary);box-shadow:0 2px 10px rgba(0,0,0,.06);position:relative;transition:all .2s;min-width:0;}
+        .appt-card:hover{box-shadow:0 5px 16px rgba(0,0,0,.10);transform:translateY(-2px);}
+        .appt-card.past{opacity:.55;filter:grayscale(35%);}
+        .appt-card.past .appt-client{text-decoration:line-through;color:var(--muted);}
+
+        .appt-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+        .appt-client-row{display:flex;align-items:center;gap:8px;flex:1 1 auto;min-width:0;}
+        .client-color-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+        .appt-client{font-weight:500;font-size:1rem;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .appt-badge{padding:4px 10px;border-radius:20px;font-size:.7rem;font-weight:600;color:#fff;letter-spacing:.5px;flex-shrink:0;}
+        .appt-badge.in{background:var(--sage);}
+        .appt-badge.out{background:var(--primary);}
+
+        .appt-actions{display:flex;gap:6px;flex-shrink:0;}
+        .appt-action-btn,.appt-menu-btn{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--bg);color:var(--primary-dark);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;transition:all .2s;}
+        .appt-action-btn:hover,.appt-menu-btn:hover{background:var(--primary-light);}
+        .appt-action-btn.whatsapp{color:#128C7E;}
+        .appt-action-btn.whatsapp:hover{background:#DCF8C6;}
+
+        .appt-date{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.85rem;margin-bottom:8px;flex-wrap:wrap;}
+        .appt-treatments{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.88rem;flex-wrap:wrap;}
+        .appt-duration{background:var(--primary-light);color:var(--primary-dark);padding:3px 9px;border-radius:12px;font-size:.75rem;font-weight:500;white-space:nowrap;}
+
+        .appt-menu{display:none;position:absolute;top:52px;right:14px;z-index:40;background:#fff;border-radius:12px;min-width:160px;box-shadow:0 6px 20px rgba(0,0,0,.18);overflow:hidden;}
+        .appt-menu.open{display:block;}
+        .appt-menu-item{display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;background:none;border:none;text-align:left;font-size:.9rem;color:var(--text);cursor:pointer;}
+        .appt-menu-item:hover{background:var(--primary-light);}
+        .appt-menu-item.danger{color:#C0392B;}
+        .appt-menu-item.danger:hover{background:#FADBD8;}
+
+        .calendar-view-toggle{display:flex;gap:6px;background:#fff;padding:6px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin:16px 0;}
+        .view-toggle-btn{flex:1;padding:11px 6px;border:none;border-radius:9px;background:transparent;color:var(--muted);font-weight:500;font-size:.88rem;cursor:pointer;transition:all .2s;}
+        .view-toggle-btn.active{background:var(--primary-dark);color:#fff;}
+
+        .calendar-nav{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fff;padding:12px;border-radius:12px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.06);}
+        .cal-nav-btn{width:38px;height:38px;border:none;border-radius:50%;background:var(--primary-light);color:var(--primary-dark);cursor:pointer;flex-shrink:0;}
+        .cal-nav-btn:hover{background:var(--primary-dark);color:#fff;}
+        #cal-title{font-size:1.05rem;text-align:center;}
+
+        .calendar-month{background:#fff;padding:12px;border-radius:var(--radius);box-shadow:0 2px 10px rgba(0,0,0,.06);}
+        .calendar-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:.72rem;font-weight:600;color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border);margin-bottom:8px;}
+        .calendar-weekdays .weekend-day{color:var(--primary-dark);}
+        .calendar-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+        .cal-day{min-height:44px;padding:4px 2px;border-radius:9px;background:var(--bg);border:2px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;font-size:.82rem;cursor:pointer;transition:all .15s;}
+        .cal-day:hover{background:var(--primary-light);}
+        .cal-day.other-month{background:transparent;color:#CFC6C0;cursor:default;}
+        .cal-day.weekend{background:var(--weekend);color:var(--primary-dark);}
+        .cal-day.holiday{background:var(--accent-light);border-color:var(--accent);}
+        .cal-day.has-appts{box-shadow:inset 0 0 0 2px var(--primary);}
+        .cal-day.today{background:var(--primary-dark);color:#fff;font-weight:600;}
+        .cal-day-number{font-weight:500;}
+        .appt-dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;margin-top:3px;}
+        .appt-dot{width:5px;height:5px;border-radius:50%;}
+
+        .calendar-week{background:#fff;padding:12px;border-radius:var(--radius);box-shadow:0 2px 10px rgba(0,0,0,.06);overflow-x:auto;}
+        .week-grid{display:grid;grid-template-columns:repeat(7,minmax(85px,1fr));gap:6px;}
+        .week-day-col{background:var(--bg);border-radius:10px;padding:8px;min-height:280px;}
+        .week-day-col.weekend{background:var(--weekend);}
+        .week-day-col.holiday{background:var(--accent-light);border:2px solid var(--accent);}
+        .week-day-header{text-align:center;font-weight:600;font-size:.8rem;padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid var(--border);}
+        .week-day-header.today,.week-day-header.weekend{color:var(--primary-dark);}
+        .week-appt{background:#fff;padding:7px 6px;border-radius:8px;border-left:3px solid var(--primary);margin-bottom:7px;font-size:.72rem;overflow-wrap:anywhere;cursor:pointer;transition:all .2s;}
+        .week-appt:hover{transform:translateX(2px);box-shadow:0 2px 8px rgba(0,0,0,.12);}
+        .week-appt-time{font-weight:600;margin-bottom:3px;}
+
+        .calendar-day{background:#fff;padding:18px;border-radius:var(--radius);box-shadow:0 2px 10px rgba(0,0,0,.06);}
+        .day-header{text-align:center;font-size:1.2rem;color:var(--primary-dark);padding-bottom:14px;margin-bottom:18px;border-bottom:1px solid var(--border);}
+        .day-header.holiday{color:var(--accent);border-bottom:2px solid var(--accent);}
+        .day-appt{display:flex;gap:12px;padding:14px;background:var(--bg);border-radius:12px;border-left:4px solid var(--primary);margin-bottom:10px;cursor:pointer;transition:all .2s;}
+        .day-appt:hover{transform:translateX(4px);box-shadow:0 3px 10px rgba(0,0,0,.1);}
+        .day-appt-time{font-weight:600;min-width:82px;font-size:.95rem;}
+        .day-appt-info{flex:1;min-width:0;}
+        .day-appt-client{display:flex;align-items:center;gap:8px;font-weight:500;margin-bottom:4px;flex-wrap:wrap;}
+        .day-appt-treatment{font-size:.85rem;color:var(--muted);}
+        .no-appts{text-align:center;padding:40px 15px;color:var(--muted);}
+
+        .client-card{background:#fff;padding:16px;border-radius:var(--radius);box-shadow:0 2px 10px rgba(0,0,0,.06);cursor:pointer;transition:all .2s;}
+        .client-card:hover{transform:translateY(-2px);box-shadow:0 5px 16px rgba(0,0,0,.1);}
+        .client-card-name{font-weight:500;font-size:1.05rem;margin-bottom:6px;}
+        .client-card-info{display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--muted);margin-bottom:3px;overflow-wrap:anywhere;}
+        .client-card-info i{width:15px;color:var(--primary-dark);flex-shrink:0;}
+
+        .client-detail-header{background:#fff;padding:22px;border-radius:var(--radius);box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:20px;}
+        .client-detail-name{font-size:1.6rem;color:var(--primary-dark);margin-bottom:14px;}
+        .client-detail-info{display:flex;align-items:center;gap:10px;color:var(--muted);margin-bottom:8px;overflow-wrap:anywhere;}
+        .client-detail-info i{width:18px;color:var(--primary-dark);flex-shrink:0;}
+
+        .client-detail-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}
+        .client-detail-actions > button{width:auto;flex:1 1 calc(50% - 5px);min-width:0;margin-top:0;padding:11px 10px;font-size:.85rem;}
+
+        .treatment-card{display:flex;align-items:center;gap:10px;background:#fff;padding:16px;border-radius:var(--radius);border-left:5px solid var(--primary);box-shadow:0 2px 10px rgba(0,0,0,.06);}
+        .treatment-color-preview{width:32px;height:32px;border-radius:9px;flex-shrink:0;}
+        .treatment-info{flex:1;min-width:0;}
+        .treatment-name{font-weight:500;font-size:1rem;margin-bottom:5px;}
+        .treatment-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:.8rem;color:var(--muted);}
+        .treatment-meta i{color:var(--primary-dark);}
+
+        .management-tabs{display:flex;gap:6px;background:#fff;padding:6px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:20px;}
+        .mgmt-tab-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 8px;border:none;border-radius:9px;background:transparent;color:var(--muted);font-weight:500;font-size:.88rem;cursor:pointer;}
+        .mgmt-tab-btn.active{background:var(--primary-dark);color:#fff;}
+        .mgmt-tab-content{display:none;}
+        .mgmt-tab-content.active{display:block;}
+
+        .login-box{background:#fff;padding:35px 24px;border-radius:var(--radius);text-align:center;max-width:400px;margin:40px auto;box-shadow:0 4px 16px rgba(0,0,0,.08);}
+        .login-icon{width:68px;height:68px;border-radius:50%;background:var(--primary-light);color:var(--primary-dark);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 18px;}
+        .login-box h2{font-size:1.6rem;margin-bottom:10px;}
+        .login-box p{color:var(--muted);margin-bottom:20px;font-size:.9rem;}
+        .error-text{color:#C0392B;font-size:.85rem;margin-top:12px;}
+
+        .message-template-card{background:#fff;padding:18px;border-radius:var(--radius);border-left:5px solid var(--accent);box-shadow:0 2px 10px rgba(0,0,0,.06);}
+        .message-template-name{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:500;font-size:1rem;margin-bottom:8px;}
+        .message-template-dates{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--muted);margin-bottom:10px;}
+        .message-template-dates i{color:var(--accent);}
+        .message-template-preview{background:var(--bg);padding:12px;border-radius:10px;font-size:.85rem;color:var(--muted);white-space:pre-wrap;max-height:130px;overflow-y:auto;margin-bottom:12px;}
+        .message-template-actions{display:flex;gap:8px;}
+        .template-active{background:var(--sage-light);color:var(--sage);padding:3px 8px;border-radius:12px;font-size:.72rem;font-weight:600;}
+        .template-inactive{background:#EFEFEF;color:#9CA3AF;padding:3px 8px;border-radius:12px;font-size:.72rem;font-weight:600;}
+
+        .filters{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0;}
+        .filters select{flex:1 1 140px;padding:12px;border:1px solid var(--border);border-radius:12px;background:#fff;font-size:.95rem;}
+        .stats-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:20px;}
+        .stat-card{background:#fff;padding:22px;border-radius:var(--radius);text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.06);}
+        .stat-card.highlight{background:linear-gradient(135deg,var(--primary-light),var(--accent-light));border:2px solid var(--primary-dark);}
+        .stat-label{display:block;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px;}
+        .stat-value{display:block;font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:600;color:var(--primary-dark);}
+        .stat-sub{display:block;font-size:.78rem;font-style:italic;color:var(--muted);margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);}
+
+        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;padding:16px;}
+        .modal.open{display:flex;}
+        .modal-content{background:#fff;padding:24px;border-radius:var(--radius);width:100%;max-width:440px;max-height:90vh;overflow-y:auto;}
+        .modal-content h3{display:flex;align-items:center;gap:10px;color:var(--primary-dark);margin-bottom:14px;font-size:1.25rem;}
+        .modal-content p{color:var(--muted);font-size:.9rem;margin-bottom:16px;}
+        .modal-actions{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+        .reminder-textarea{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:.95rem;min-height:150px;resize:vertical;}
+        .reminder-textarea:focus{outline:none;border-color:#128C7E;box-shadow:0 0 0 3px rgba(18,140,126,.15);}
+        .export-options{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
+        .export-btn{padding:13px;border:1px solid var(--primary-dark);border-radius:12px;background:var(--primary-light);color:var(--primary-dark);font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;}
+        .export-btn:hover{background:var(--primary-dark);color:#fff;}
+
+        .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:50;display:flex;gap:2px;padding:10px 4px calc(10px + env(safe-area-inset-bottom,0px));background:#fff;border-top:1px solid var(--border);box-shadow:0 -2px 12px rgba(0,0,0,.07);}
+        .nav-btn{flex:1;min-width:0;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 2px;color:var(--muted);font-size:.62rem;transition:color .2s;}
+        .nav-btn .icon{font-size:1.15rem;transition:transform .2s;}
+        .nav-btn.active{color:var(--primary-dark);font-weight:600;}
+        .nav-btn.active .icon{transform:scale(1.12);}
+        .nav-btn span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+        /* Loading overlay */
+        #loading-overlay{
+          display:none;position:fixed;inset:0;background:rgba(255,255,255,.85);
+          z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:15px;
+        }
+        #loading-overlay.active{display:flex;}
+        .spinner{width:40px;height:40px;border:4px solid var(--primary-light);border-top-color:var(--primary-dark);border-radius:50%;animation:spin 1s linear infinite;}
+        @keyframes spin{to{transform:rotate(360deg);}}
+
+        @media (min-width:480px){.cal-day{aspect-ratio:1;min-height:0;}.app-content{padding:24px;}}
+        @media (min-width:768px){
+          body{padding-bottom:0;padding-left:220px;}
+          .bottom-nav{flex-direction:column;top:0;bottom:0;left:0;right:auto;width:220px;padding:28px 0;gap:6px;border-top:none;border-right:1px solid var(--border);box-shadow:2px 0 12px rgba(0,0,0,.06);}
+          .nav-btn{flex-direction:row;justify-content:flex-start;padding:14px 26px;gap:14px;font-size:.95rem;}
+          .nav-btn .icon{font-size:1.25rem;}
+          .stats-grid{grid-template-columns:repeat(3,1fr);}
+          .app-content{padding:28px;}
+          .view-header h2{font-size:1.6rem;}
+          .client-detail-actions > button{flex:1 1 auto;}
+        }
+        @media (max-width:767px){input,select,textarea{font-size:16px !important;}input[type="color"]{font-size:inherit !important;}}
+    </style>
+</head>
+<body>
+
+    <!-- LOADING -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p style="color:var(--muted);">Caricamento dati...</p>
+    </div>
+
+    <header class="app-header">
+        <img src="logo.png" alt="Logo" class="app-logo" onerror="this.style.display='none'">
+        <h1>Beauty Agenda</h1>
+    </header>
+
+    <main class="app-content">
+        
+        <!-- AGENDA -->
+        <section id="view-agenda" class="view active">
+            <div class="view-header">
+                <h2><i class="fas fa-calendar-alt"></i> Appuntamenti</h2>
+                <div class="header-actions">
+                    <label class="btn-icon" title="Importa appuntamenti">
+                        <i class="fas fa-file-import"></i>
+                        <input type="file" id="import-appointments-file" accept=".xlsx,.xls,.csv" style="display:none;">
+                    </label>
+                    <button id="btn-export-calendar" class="btn-icon" title="Esporta calendario">
+                        <i class="fas fa-file-export"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="appointments-list" class="cards-container"></div>
+        </section>
+
+        <!-- CALENDARIO -->
+        <section id="view-calendar" class="view">
+            <h2><i class="fas fa-calendar"></i> Calendario</h2>
+            <div class="calendar-view-toggle">
+                <button class="view-toggle-btn active" data-view="month">Mensile</button>
+                <button class="view-toggle-btn" data-view="week">Settimanale</button>
+                <button class="view-toggle-btn" data-view="day">Giornaliera</button>
+            </div>
+            <div class="calendar-nav">
+                <button id="cal-prev" class="cal-nav-btn"><i class="fas fa-chevron-left"></i></button>
+                <h3 id="cal-title">Ottobre 2026</h3>
+                <button id="cal-next" class="cal-nav-btn"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div id="calendar-container"></div>
+        </section>
+
+        <!-- NUOVO / MODIFICA APPUNTAMENTO -->
+        <section id="view-new" class="view">
+            <div class="view-header">
+                <h2 id="form-title"><i class="fas fa-plus-circle"></i> Nuovo Appuntamento</h2>
+                <button id="btn-back-to-client" class="btn-icon" style="display:none;" title="Torna alla scheda cliente">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            <form id="appointment-form" class="appt-form">
+                <input type="hidden" id="form-id">
+                
+                <div class="form-group">
+                    <label for="form-client"><i class="fas fa-user"></i> Cliente</label>
+                    <select id="form-client" required>
+                        <option value="">Seleziona cliente...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="form-treatment-1"><i class="fas fa-spa"></i> Trattamento 1 *</label>
+                    <select id="form-treatment-1" required>
+                        <option value="">Seleziona trattamento...</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="treatment-2-group" style="display:none;">
+                    <label for="form-treatment-2"><i class="fas fa-spa"></i> Trattamento 2 (opzionale)</label>
+                    <select id="form-treatment-2">
+                        <option value="">Nessun secondo trattamento</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="treatment-3-group" style="display:none;">
+                    <label for="form-treatment-3"><i class="fas fa-spa"></i> Trattamento 3 (opzionale)</label>
+                    <select id="form-treatment-3">
+                        <option value="">Nessun terzo trattamento</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="form-date"><i class="fas fa-calendar-day"></i> Data</label>
+                        <input type="date" id="form-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="form-time"><i class="fas fa-clock"></i> Ora</label>
+                        <input type="time" id="form-time" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-map-marker-alt"></i> Luogo</label>
+                    <div class="location-toggle">
+                        <label class="location-option">
+                            <input type="radio" name="location" value="IN" checked>
+                            <span class="location-btn in"><i class="fas fa-building"></i> IN (Studio)</span>
+                        </label>
+                        <label class="location-option">
+                            <input type="radio" name="location" value="OUT">
+                            <span class="location-btn out"><i class="fas fa-home"></i> OUT (Domicilio)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-save"></i> Salva Appuntamento
+                </button>
+                <button type="button" id="btn-cancel-edit" class="btn-secondary" style="display:none;">
+                    <i class="fas fa-times"></i> Annulla modifica
+                </button>
+            </form>
+        </section>
+
+        <!-- ANAGRAFICA CLIENTI -->
+        <section id="view-clients" class="view">
+            <div class="view-header">
+                <h2><i class="fas fa-users"></i> Anagrafica Clienti</h2>
+                <div class="header-actions">
+                    <label class="btn-icon" title="Importa da Excel">
+                        <i class="fas fa-file-import"></i>
+                        <input type="file" id="import-clients-file" accept=".xlsx,.xls,.csv" style="display:none;">
+                    </label>
+                    <button id="btn-new-client" class="btn-icon" title="Nuovo cliente">
+                        <i class="fas fa-user-plus"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="clients-list-view">
+                <input type="text" id="search-clients" placeholder="Cerca cliente..." class="search-input">
+                <div id="clients-list" class="cards-container"></div>
+            </div>
+
+            <div id="client-detail-view" style="display:none;">
+                <button id="btn-back-clients" class="btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Torna alla lista
+                </button>
+                <div id="client-detail-content"></div>
+            </div>
+
+            <div id="client-form-view" style="display:none;">
+                <button id="btn-cancel-client" class="btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Annulla
+                </button>
+                <h3 id="client-form-title">Nuovo Cliente</h3>
+                <form id="client-form" class="appt-form">
+                    <input type="hidden" id="client-form-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="client-name">Nome *</label>
+                            <input type="text" id="client-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="client-surname">Cognome</label>
+                            <input type="text" id="client-surname">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="client-gender"><i class="fas fa-venus-mars"></i> Sesso</label>
+                        <select id="client-gender">
+                            <option value="">Non specificato</option>
+                            <option value="F">Femmina</option>
+                            <option value="M">Maschio</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="client-phone"><i class="fas fa-phone"></i> Telefono</label>
+                            <input type="tel" id="client-phone">
+                        </div>
+                        <div class="form-group">
+                            <label for="client-email"><i class="fas fa-envelope"></i> Email</label>
+                            <input type="email" id="client-email">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="client-address"><i class="fas fa-map-marker-alt"></i> Indirizzo</label>
+                        <input type="text" id="client-address" placeholder="Via, numero, città">
+                    </div>
+                    <div class="form-group">
+                        <label for="client-notes"><i class="fas fa-sticky-note"></i> Note</label>
+                        <textarea id="client-notes" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Salva Cliente
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- STATISTICHE -->
+        <section id="view-stats" class="view">
+            <h2><i class="fas fa-chart-bar"></i> Statistiche e Previsioni</h2>
+            <div class="filters">
+                <select id="filter-client">
+                    <option value="">Tutti i Clienti</option>
+                </select>
+                <select id="filter-treatment">
+                    <option value="">Tutti i Trattamenti</option>
+                </select>
+            </div>
+            <div id="stats-results" class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-label">Totale Eseguiti</span>
+                    <span id="stat-count" class="stat-value">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Frequenza Reale</span>
+                    <span id="stat-freq" class="stat-value">N/A</span>
+                    <span id="stat-freq-rec" class="stat-sub">Frequenza consigliata: -</span>
+                </div>
+                <div class="stat-card highlight">
+                    <span class="stat-label">Prossimo Appunt.</span>
+                    <span id="stat-next" class="stat-value">N/A</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- MANAGEMENT -->
+        <section id="view-management" class="view">
+            <div id="management-login" class="login-box">
+                <div class="login-icon"><i class="fas fa-heart"></i></div>
+                <h2>Area Riservata</h2>
+                <p>Inserisci la password per accedere</p>
+                <input type="password" id="management-password" placeholder="Password" class="search-input">
+                <button id="btn-management-login" class="btn-primary">
+                    <i class="fas fa-unlock"></i> Sblocca
+                </button>
+                <p id="login-error" class="error-text"></p>
+            </div>
+
+            <div id="management-content" style="display:none;">
+                <div class="view-header">
+                    <h2><i class="fas fa-heart"></i> Management</h2>
+                    <button id="btn-logout-management" class="btn-icon" title="Blocca">
+                        <i class="fas fa-lock"></i>
+                    </button>
+                </div>
+
+                <div class="management-tabs">
+                    <button class="mgmt-tab-btn active" data-tab="treatments">
+                        <i class="fas fa-spa"></i> Trattamenti
+                    </button>
+                    <button class="mgmt-tab-btn" data-tab="messages">
+                        <i class="fas fa-comment-dots"></i> Messaggi
+                    </button>
+                </div>
+
+                <div id="mgmt-tab-treatments" class="mgmt-tab-content active">
+                    <div class="header-actions" style="margin-bottom:15px;">
+                        <label class="btn-icon" title="Importa trattamenti">
+                            <i class="fas fa-file-import"></i>
+                            <input type="file" id="import-treatments-file" accept=".xlsx,.xls,.csv" style="display:none;">
+                        </label>
+                        <button id="btn-new-treatment" class="btn-icon" title="Nuovo trattamento">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div id="treatments-list" class="cards-container"></div>
+                </div>
+
+                <div id="mgmt-tab-messages" class="mgmt-tab-content">
+                    <button id="btn-new-message-template" class="btn-primary" style="margin-bottom:15px;">
+                        <i class="fas fa-plus"></i> Nuovo Template
+                    </button>
+                    <div id="message-templates-list" class="cards-container"></div>
+                </div>
+            </div>
+
+            <div id="treatment-form-view" style="display:none;">
+                <button id="btn-cancel-treatment" class="btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Annulla
+                </button>
+                <h3 id="treatment-form-title">Nuovo Trattamento</h3>
+                <form id="treatment-form" class="appt-form">
+                    <input type="hidden" id="treatment-form-id">
+                    <div class="form-group">
+                        <label for="treatment-name">Nome trattamento *</label>
+                        <input type="text" id="treatment-name" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="treatment-duration"><i class="fas fa-clock"></i> Durata (minuti) *</label>
+                            <input type="number" id="treatment-duration" min="5" step="5" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="treatment-frequency"><i class="fas fa-sync"></i> Frequenza (giorni)</label>
+                            <input type="number" id="treatment-frequency" min="1" value="30">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="treatment-color"><i class="fas fa-palette"></i> Colore identificativo</label>
+                        <input type="color" id="treatment-color" value="#B87D7D">
+                    </div>
+                    <div class="form-group">
+                        <label for="treatment-desc"><i class="fas fa-info-circle"></i> Descrizione</label>
+                        <textarea id="treatment-desc" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Salva Trattamento
+                    </button>
+                </form>
+            </div>
+
+            <div id="message-form-view" style="display:none;">
+                <button id="btn-cancel-message" class="btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Annulla
+                </button>
+                <h3 id="message-form-title">Nuovo Template Messaggio</h3>
+                <form id="message-form" class="appt-form">
+                    <input type="hidden" id="message-form-id">
+                    <div class="form-group">
+                        <label for="message-name">Nome template *</label>
+                        <input type="text" id="message-name" required placeholder="Es: Standard, Halloween 2026">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="message-start-date"><i class="fas fa-calendar-day"></i> Data inizio validità</label>
+                            <input type="date" id="message-start-date">
+                        </div>
+                        <div class="form-group">
+                            <label for="message-end-date"><i class="fas fa-calendar-day"></i> Data fine validità</label>
+                            <input type="date" id="message-end-date">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="message-content"><i class="fas fa-comment"></i> Contenuto messaggio *</label>
+                        <textarea id="message-content" rows="8" required placeholder="Usa {nome}, {trattamento}, {data}, {ora}, {luogo}, {emoji}"></textarea>
+                        <small>Variabili: {nome}, {trattamento}, {data}, {ora}, {luogo}, {emoji}</small>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Salva Template
+                    </button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <nav class="bottom-nav">
+        <button class="nav-btn active" data-target="view-agenda">
+            <i class="fas fa-calendar-alt icon"></i>
+            <span>Agenda</span>
+        </button>
+        <button class="nav-btn" data-target="view-calendar">
+            <i class="fas fa-calendar icon"></i>
+            <span>Calendario</span>
+        </button>
+        <button class="nav-btn" data-target="view-new">
+            <i class="fas fa-plus-circle icon"></i>
+            <span>Nuovo</span>
+        </button>
+        <button class="nav-btn" data-target="view-clients">
+            <i class="fas fa-users icon"></i>
+            <span>Clienti</span>
+        </button>
+        <button class="nav-btn" data-target="view-stats">
+            <i class="fas fa-chart-bar icon"></i>
+            <span>Stats</span>
+        </button>
+        <button class="nav-btn" data-target="view-management">
+            <i class="fas fa-heart icon"></i>
+            <span>M</span>
+        </button>
+    </nav>
+
+    <div id="export-modal" class="modal">
+        <div class="modal-content">
+            <h3><i class="fas fa-file-export"></i> Esporta Calendario</h3>
+            <p>Scegli il formato:</p>
+            <div class="export-options">
+                <button class="export-btn" data-format="xlsx">
+                    <i class="fas fa-file-excel"></i> Excel (.xlsx)
+                </button>
+                <button class="export-btn" data-format="csv">
+                    <i class="fas fa-file-csv"></i> CSV (.csv)
+                </button>
+            </div>
+            <button id="close-export-modal" class="btn-secondary">Annulla</button>
+        </div>
+    </div>
+
+    <div id="reminder-modal" class="modal">
+        <div class="modal-content">
+            <h3><i class="fas fa-paper-plane"></i> Invia Promemoria WhatsApp</h3>
+            <div class="form-group">
+                <label for="reminder-template-select"><i class="fas fa-list"></i> Seleziona template</label>
+                <select id="reminder-template-select">
+                    <option value="">Messaggio personalizzato</option>
+                </select>
+            </div>
+            <p>Modifica il messaggio prima di inviarlo:</p>
+            <textarea id="reminder-message" rows="6" class="reminder-textarea"></textarea>
+            <div class="modal-actions">
+                <button id="btn-send-whatsapp" class="btn-primary">
+                    <i class="fab fa-whatsapp"></i> Invia su WhatsApp
+                </button>
+                <button id="close-reminder-modal" class="btn-secondary">Annulla</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="appointment-detail-modal" class="modal">
+        <div class="modal-content">
+            <h3><i class="fas fa-calendar-check"></i> Dettaglio Appuntamento</h3>
+            <div id="appointment-detail-content"></div>
+            <div class="modal-actions">
+                <button id="btn-edit-from-calendar" class="btn-primary">
+                    <i class="fas fa-edit"></i> Modifica
+                </button>
+                <button id="close-appointment-detail-modal" class="btn-secondary">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 🔥 CONFIGURAZIONE FIREBASE 🔥
+        // ==========================================
+        // ⚠️ SOSTITUISCI QUESTO OGGETTO CON I TUOI DATI FIREBASE
+        // Li trovi in: Firebase Console → Impostazioni progetto → Generale → La tua app
+        const firebaseConfig = {
+  apiKey: "AIzaSyDt3A_gR_uTdzB4pbJzXQOFESL1LM75ihg",
+  authDomain: "agenda-mc-97a20.firebaseapp.com",
+  projectId: "agenda-mc-97a20",
+  storageBucket: "agenda-mc-97a20.firebasestorage.app",
+  messagingSenderId: "639380268664",
+  appId: "1:639380268664:web:a3c602217ef6f3db452f8d"
+        };
+
+        // ==========================================
+        // Inizializzazione Firebase
+        // ==========================================
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // ==========================================
+        // CONFIGURAZIONE APP
+        // ==========================================
+        const ADMIN_PASSWORD = "admin123"; // ⚠️ CAMBIALA!
+        
+        // ==========================================
+        // STATO APP (cache locale per velocità)
+        // ==========================================
+        let clients = [];
+        let treatments = [];
+        let appointments = [];
+        let messageTemplates = [];
+        let clientFromDetail = null;
+        let managementUnlocked = false;
+        let currentAppointmentDetailId = null;
+
+        // ==========================================
+        // HELPER FUNCTIONS
+        // ==========================================
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function formatDateIT(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return dateStr;
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+
+        function parseDateIT(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('/');
+            if (parts.length !== 3) return dateStr;
+            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+
+        function getEndTime(time, durationMinutes) {
+            if (!time || !durationMinutes) return null;
+            const [h, m] = time.split(':').map(Number);
+            const totalMinutes = h * 60 + m + durationMinutes;
+            const endH = Math.floor(totalMinutes / 60) % 24;
+            const endM = totalMinutes % 60;
+            return `${String(endH).padStart(2,'0')}:${String(endM).padStart(2,'0')}`;
+        }
+
+        function getAppointmentDuration(appt) {
+            let total = 0;
+            (appt.treatmentIds || []).forEach(tid => {
+                const t = treatments.find(x => x.id === tid);
+                if (t) total += t.duration;
+            });
+            return total;
+        }
+
+        function getAppointmentTreatments(appt) {
+            return (appt.treatmentIds || []).map(tid => treatments.find(t => t.id === tid)).filter(t => t);
+        }
+
+        function getTreatmentsText(appt) {
+            return getAppointmentTreatments(appt).map(t => t.name).join(' + ');
+        }
+
+        function isAppointmentPast(appt) {
+            const now = new Date();
+            const apptDateTime = new Date(appt.date + 'T' + (appt.time || '23:59'));
+            return apptDateTime < now;
+        }
+
+        function getClientFullName(client) {
+            return `${client.name} ${client.surname || ''}`.trim();
+        }
+
+        function getClientEmoji(client) {
+            if (client.gender === 'F') return '💆‍♀️';
+            if (client.gender === 'M') return '💆‍♂️';
+            return '💆';
+        }
+
+        function getEasterDate(year) {
+            const a = year % 19, b = Math.floor(year / 100), c = year % 100;
+            const d = Math.floor(b / 4), e = b % 4;
+            const f = Math.floor((b + 8) / 25);
+            const g = Math.floor((b - f + 1) / 3);
+            const h = (19 * a + b - d - g + 15) % 30;
+            const i = Math.floor(c / 4), k = c % 4;
+            const l = (32 + 2 * e + 2 * i - h - k) % 7;
+            const m = Math.floor((a + 11 * h + 22 * l) / 451);
+            const month = Math.floor((h + l - 7 * m + 114) / 31);
+            const day = ((h + l - 7 * m + 114) % 31) + 1;
+            return new Date(year, month - 1, day);
+        }
+
+        function getItalianHolidays(year) {
+            const easter = getEasterDate(year);
+            const easterMonday = new Date(easter);
+            easterMonday.setDate(easter.getDate() + 1);
+            return [
+                `${year}-01-01`, `${year}-01-06`, formatDate(easter), formatDate(easterMonday),
+                `${year}-04-25`, `${year}-05-01`, `${year}-06-02`, `${year}-08-15`,
+                `${year}-11-01`, `${year}-12-08`, `${year}-12-25`, `${year}-12-26`
+            ];
+        }
+
+        function isHoliday(date) {
+            return getItalianHolidays(date.getFullYear()).includes(formatDate(date));
+        }
+
+        function isWeekend(date) {
+            const day = date.getDay();
+            return day === 0 || day === 6;
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading-overlay').classList.toggle('active', show);
+        }
+
+        // ==========================================
+        // 🔥 FIREBASE CRUD 🔥
+        // ==========================================
+        
+        // Carica tutti i dati da Firestore
+        async function loadAllData() {
+            showLoading(true);
+            try {
+                const [clientsSnap, treatmentsSnap, apptsSnap, templatesSnap] = await Promise.all([
+                    db.collection('clients').get(),
+                    db.collection('treatments').get(),
+                    db.collection('appointments').get(),
+                    db.collection('messageTemplates').get()
+                ]);
+
+                clients = clientsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                treatments = treatmentsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                appointments = apptsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                messageTemplates = templatesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+                // Compatibilità: assicurati che tutti gli appuntamenti abbiano treatmentIds array
+                appointments.forEach(a => {
+                    if (!Array.isArray(a.treatmentIds)) {
+                        a.treatmentIds = a.treatmentId ? [a.treatmentId] : [];
+                    }
+                });
+
+                showLoading(false);
+                renderAll();
+            } catch (err) {
+                showLoading(false);
+                console.error('Errore caricamento dati:', err);
+                alert('❌ Errore nel caricamento dei dati da Firebase. Controlla la console (F12) e la configurazione firebaseConfig.');
+            }
+        }
+
+        // Clienti
+        async function saveClient(clientData, id = null) {
+            try {
+                if (id) {
+                    await db.collection('clients').doc(id).update(clientData);
+                } else {
+                    const docRef = await db.collection('clients').add(clientData);
+                    id = docRef.id;
+                }
+                await loadAllData();
+                return id;
+            } catch (err) {
+                console.error(err);
+                alert('❌ Errore salvataggio cliente');
+                return null;
+            }
+        }
+
+        async function deleteClient(id) {
+            try {
+                await db.collection('clients').doc(id).delete();
+                await loadAllData();
+            } catch (err) {
+                console.error(err);
+                alert('❌ Errore eliminazione cliente');
+            }
+        }
+
+        // Trattamenti
+        async function saveTreatment(treatmentData, id = null) {
+            try {
+                if (id) {
+                    await db.collection('treatments').doc(id).update(treatmentData);
+                } else {
+                    const docRef = await db.collection('treatments').add(treatmentData);
+                    id = docRef.id;
+                }
+                await loadAllData();
+                return id;
+            } catch (err) {
+                console.error(err);
+                alert('❌ Errore salvataggio trattamento');
+                return null;
+            }
+        }
+
+        async function deleteTreatment(id) {
+            try {
+                await db.collection('treatments').doc(id).delete();
+                await loadAllData();
+            } catch (err) {
+                console.error(err);
+                alert('❌ Errore eliminazione trattamento');
+            }
+        }
+
+        // Appuntamenti
+        async function saveAppointment(apptData, id = null) {
+            try {
+                if (id) {
+                    await db.collection('appointments').doc(id).update(apptData);
+                } else {
+                    const docRef = await db.collection('appointments').add(apptData);
+                    id = docRef.id;
+                }
+                await loadAllData();
+                return id;
+            } catch (err) {
+                console.error(err);
+                alert('❌ Errore salvataggio appuntamento');
+                return null;
+            }
+        }
+
+        async function deleteAppointment(id) {
+            try {
+                await db.collection('appointments').doc(id).delete();
+                await loadAllData();
+            } catch (err) {
+                console.error(err);
+                alert('❌ Errore eliminazione appuntamento');
+            }
+        }
+
+        // Template messaggi
+        async function saveMessageTemplate(templateData, id = null) {
+            try {
+                if (id) {
+                    await db.collection('messageTemplates').doc(id).update(templateData);
+                } else {
+                    const docRef = await db.collection('messageTemplates').add(templateData);
+                    id = docRef.id;
+                }
+                await loadAllData();
+                return id;
+            } catch (err) {
+                console.error(err);
+                alert('❌ Errore salvataggio template');
+                return null;
+            }
+        }
+
+        async function deleteMessageTemplate(id) {
+            try {
+                await db.collection('messageTemplates').doc(id).delete();
+                await loadAllData();
+            } catch (err) {
+                console.error(err);
+                alert('❌ Errore eliminazione template');
+            }
+        }
+
+        // ==========================================
+        // NAVIGAZIONE
+        // ==========================================
+        const navButtons = document.querySelectorAll('.nav-btn');
+        const views = document.querySelectorAll('.view');
+
+        function showView(target) {
+            navButtons.forEach(b => b.classList.toggle('active', b.dataset.target === target));
+            views.forEach(v => v.classList.toggle('active', v.id === target));
+
+            if (target === 'view-calendar') renderCalendar();
+            if (target === 'view-clients') { showClientsList(); renderClients(); }
+            if (target === 'view-management') {
+                if (!managementUnlocked) {
+                    document.getElementById('management-login').style.display = 'block';
+                    document.getElementById('management-content').style.display = 'none';
+                } else {
+                    document.getElementById('management-login').style.display = 'none';
+                    document.getElementById('management-content').style.display = 'block';
+                    renderTreatments();
+                    renderMessageTemplates();
+                }
+            }
+        }
+
+        navButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = btn.dataset.target;
+                if (target === 'view-new') resetForm();
+                showView(target);
+            });
+        });
+
+        // ==========================================
+        // AGENDA
+        // ==========================================
+        function renderAppointments() {
+            const list = document.getElementById('appointments-list');
+            list.innerHTML = '';
+
+            const future = appointments.filter(a => !isAppointmentPast(a))
+                .sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
+            const past = appointments.filter(a => isAppointmentPast(a))
+                .sort((a, b) => new Date(b.date + 'T' + b.time) - new Date(a.date + 'T' + a.time));
+            const sorted = [...future, ...past];
+
+            if (sorted.length === 0) {
+                list.innerHTML = '<p style="text-align:center;color:#6B6B6B;padding:40px;">Nessun appuntamento</p>';
+                return;
+            }
+
+            sorted.forEach(appt => {
+                const client = clients.find(c => c.id === appt.clientId);
+                if (!client) return;
+                const tr = getAppointmentTreatments(appt);
+                if (tr.length === 0) return;
+
+                const dateObj = new Date(appt.date + 'T00:00:00');
+                const formattedDate = dateObj.toLocaleDateString('it-IT', { 
+                    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' 
+                });
+                const totalDuration = getAppointmentDuration(appt);
+                const endTime = getEndTime(appt.time, totalDuration);
+                const timeRange = endTime ? `${appt.time} - ${endTime}` : appt.time;
+                const past = isAppointmentPast(appt);
+                const mainTr = tr[0];
+
+                const card = document.createElement('div');
+                card.className = `appt-card ${appt.location.toLowerCase()} ${past ? 'past' : ''}`;
+                card.style.borderLeftColor = mainTr.color;
+                card.innerHTML = `
+                    <div class="appt-header">
+                        <div class="appt-client-row">
+                            <div class="client-color-dot" style="background:${mainTr.color}"></div>
+                            <span class="appt-client">${getClientFullName(client)}</span>
+                        </div>
+                        <span class="appt-badge ${appt.location.toLowerCase()}">${appt.location}</span>
+                        <div class="appt-actions">
+                            <button class="appt-action-btn whatsapp" data-id="${appt.id}" title="Invia promemoria WhatsApp">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                            <button class="appt-menu-btn" data-id="${appt.id}"><i class="fas fa-ellipsis-v"></i></button>
+                        </div>
+                    </div>
+                    <div class="appt-date"><i class="fas fa-calendar"></i> ${formattedDate} • ${timeRange}</div>
+                    <div class="appt-treatments">
+                        <span style="color:${mainTr.color};font-weight:500;">${getTreatmentsText(appt)}</span>
+                        <span class="appt-duration"><i class="fas fa-clock"></i> ${totalDuration} min</span>
+                    </div>
+                    <div class="appt-menu" id="menu-${appt.id}">
+                        <button class="appt-menu-item" data-action="edit" data-id="${appt.id}">
+                            <i class="fas fa-edit"></i> Modifica
+                        </button>
+                        <button class="appt-menu-item" data-action="duplicate" data-id="${appt.id}">
+                            <i class="fas fa-copy"></i> Duplica
+                        </button>
+                        <button class="appt-menu-item danger" data-action="delete" data-id="${appt.id}">
+                            <i class="fas fa-trash"></i> Elimina
+                        </button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+
+            // Event listeners
+            document.querySelectorAll('.appt-action-btn.whatsapp').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openReminderModal(btn.dataset.id);
+                });
+            });
+
+            document.querySelectorAll('.appt-menu-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = btn.dataset.id;
+                    const menu = document.getElementById(`menu-${id}`);
+                    document.querySelectorAll('.appt-menu').forEach(m => { if (m !== menu) m.classList.remove('open'); });
+                    menu.classList.toggle('open');
+                });
+            });
+
+            document.addEventListener('click', () => {
+                document.querySelectorAll('.appt-menu').forEach(m => m.classList.remove('open'));
+            });
+
+            document.querySelectorAll('.appt-menu-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const action = item.dataset.action;
+                    const id = item.dataset.id;
+                    const appt = appointments.find(a => a.id === id);
+                    if (action === 'edit') openEditForm(appt);
+                    else if (action === 'duplicate') openDuplicateForm(appt);
+                    else if (action === 'delete') {
+                        if (confirm('Eliminare questo appuntamento?')) {
+                            deleteAppointment(id);
+                        }
+                    }
+                });
+            });
+        }
+
+        // ==========================================
+        // MODAL WHATSAPP
+        // ==========================================
+        let currentReminderApptId = null;
+
+        function openReminderModal(apptId) {
+            const appt = appointments.find(a => a.id === apptId);
+            if (!appt) return;
+            currentReminderApptId = apptId;
+            const client = clients.find(c => c.id === appt.clientId);
+            if (!client) return;
+
+            const dateObj = new Date(appt.date + 'T00:00:00');
+            const formattedDate = dateObj.toLocaleDateString('it-IT', { 
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+            });
+            const totalDuration = getAppointmentDuration(appt);
+            const endTime = getEndTime(appt.time, totalDuration);
+            const timeRange = endTime ? `dalle ${appt.time} alle ${endTime}` : `alle ${appt.time}`;
+            const locationText = appt.location === 'IN' ? 'in studio' : 'a domicilio';
+            const treatmentsText = getTreatmentsText(appt);
+            const emoji = getClientEmoji(client);
+
+            // Popola template dropdown
+            const templateSelect = document.getElementById('reminder-template-select');
+            templateSelect.innerHTML = '<option value="">Messaggio personalizzato</option>';
+            const today = formatDate(new Date());
+            messageTemplates.filter(t => {
+                if (!t.startDate && !t.endDate) return true;
+                if (t.startDate && t.endDate) return today >= t.startDate && today <= t.endDate;
+                if (t.startDate) return today >= t.startDate;
+                if (t.endDate) return today <= t.endDate;
+                return true;
+            }).forEach(t => {
+                templateSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+            });
+
+            // Template default
+            const defaultTemplate = messageTemplates.find(t => 
+                t.name.toLowerCase().includes(appt.location === 'IN' ? 'standard in' : 'standard out')
+            ) || messageTemplates[0];
+
+            let defaultMessage = defaultTemplate ? defaultTemplate.content : 
+                `Ciao {nome}! ✨\n\nTi ricordo il tuo appuntamento per {trattamento} {data} {ora} {luogo}.\n\nTi aspetto! {emoji}`;
+
+            defaultMessage = defaultMessage
+                .replace(/{nome}/g, client.name)
+                .replace(/{trattamento}/g, treatmentsText)
+                .replace(/{data}/g, formattedDate)
+                .replace(/{ora}/g, timeRange)
+                .replace(/{luogo}/g, locationText)
+                .replace(/{emoji}/g, emoji);
+
+            document.getElementById('reminder-message').value = defaultMessage;
+            if (defaultTemplate) templateSelect.value = defaultTemplate.id;
+            document.getElementById('reminder-modal').classList.add('open');
+        }
+
+        document.getElementById('reminder-template-select').addEventListener('change', (e) => {
+            const templateId = e.target.value;
+            if (!templateId || !currentReminderApptId) return;
+
+            const appt = appointments.find(a => a.id === currentReminderApptId);
+            const client = clients.find(c => c.id === appt.clientId);
+            const template = messageTemplates.find(t => t.id === templateId);
+            if (!template || !client) return;
+
+            const dateObj = new Date(appt.date + 'T00:00:00');
+            const formattedDate = dateObj.toLocaleDateString('it-IT', { 
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+            });
+            const totalDuration = getAppointmentDuration(appt);
+            const endTime = getEndTime(appt.time, totalDuration);
+            const timeRange = endTime ? `dalle ${appt.time} alle ${endTime}` : `alle ${appt.time}`;
+            const locationText = appt.location === 'IN' ? 'in studio' : 'a domicilio';
+            const emoji = getClientEmoji(client);
+
+            let message = template.content
+                .replace(/{nome}/g, client.name)
+                .replace(/{trattamento}/g, getTreatmentsText(appt))
+                .replace(/{data}/g, formattedDate)
+                .replace(/{ora}/g, timeRange)
+                .replace(/{luogo}/g, locationText)
+                .replace(/{emoji}/g, emoji);
+
+            document.getElementById('reminder-message').value = message;
+        });
+
+        document.getElementById('close-reminder-modal').addEventListener('click', () => {
+            document.getElementById('reminder-modal').classList.remove('open');
+            currentReminderApptId = null;
+        });
+
+        document.getElementById('btn-send-whatsapp').addEventListener('click', () => {
+            if (!currentReminderApptId) return;
+            const appt = appointments.find(a => a.id === currentReminderApptId);
+            const client = clients.find(c => c.id === appt.clientId);
+            const message = document.getElementById('reminder-message').value;
+            
+            let whatsappUrl;
+            if (client && client.phone) {
+                let phone = client.phone.replace(/[\s\-\.]/g, '');
+                if (phone.startsWith('0')) phone = phone.substring(1);
+                if (!phone.startsWith('39')) phone = '39' + phone;
+                whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+            } else {
+                whatsappUrl = `https://web.whatsapp.com/?text=${encodeURIComponent(message)}`;
+            }
+            
+            window.open(whatsappUrl, '_blank');
+            document.getElementById('reminder-modal').classList.remove('open');
+            currentReminderApptId = null;
+        });
+
+        // ==========================================
+        // CALENDARIO
+        // ==========================================
+        let currentCalDate = new Date();
+        let currentCalView = 'month';
+
+        document.querySelectorAll('.view-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentCalView = btn.dataset.view;
+                renderCalendar();
+            });
+        });
+
+        document.getElementById('cal-prev').addEventListener('click', () => navigateCalendar(-1));
+        document.getElementById('cal-next').addEventListener('click', () => navigateCalendar(1));
+
+        function navigateCalendar(direction) {
+            if (currentCalView === 'month') currentCalDate.setMonth(currentCalDate.getMonth() + direction);
+            else if (currentCalView === 'week') currentCalDate.setDate(currentCalDate.getDate() + (7 * direction));
+            else currentCalDate.setDate(currentCalDate.getDate() + direction);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const container = document.getElementById('calendar-container');
+            const title = document.getElementById('cal-title');
+            container.innerHTML = '';
+            if (currentCalView === 'month') renderMonthView(container, title);
+            else if (currentCalView === 'week') renderWeekView(container, title);
+            else renderDayView(container, title);
+        }
+
+        function renderMonthView(container, title) {
+            const year = currentCalDate.getFullYear();
+            const month = currentCalDate.getMonth();
+            const monthNames = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
+                                'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+            title.textContent = `${monthNames[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDayOfWeek = (firstDay.getDay() + 6) % 7;
+            const totalDays = lastDay.getDate();
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            let html = `<div class="calendar-month">
+                <div class="calendar-weekdays">
+                    <div>Lun</div><div>Mar</div><div>Mer</div><div>Gio</div><div>Ven</div>
+                    <div class="weekend-day">Sab</div><div class="weekend-day">Dom</div>
+                </div>
+                <div class="calendar-days">`;
+
+            const prevMonthLastDay = new Date(year, month, 0).getDate();
+            for (let i = startDayOfWeek - 1; i >= 0; i--) {
+                html += `<div class="cal-day other-month"><span class="cal-day-number">${prevMonthLastDay - i}</span></div>`;
+            }
+
+            for (let d = 1; d <= totalDays; d++) {
+                const dateObj = new Date(year, month, d);
+                const dateStr = formatDate(dateObj);
+                const dayAppts = appointments.filter(a => a.date === dateStr);
+                const isToday = dateObj.getTime() === today.getTime();
+                const weekend = isWeekend(dateObj);
+                const holiday = isHoliday(dateObj);
+                
+                let classes = 'cal-day';
+                if (isToday) classes += ' today';
+                if (weekend) classes += ' weekend';
+                if (holiday) classes += ' holiday';
+                if (dayAppts.length > 0) classes += ' has-appts';
+
+                let dots = '';
+                dayAppts.slice(0, 4).forEach(a => {
+                    const tr = getAppointmentTreatments(a);
+                    if (tr.length > 0) dots += `<div class="appt-dot" style="background:${tr[0].color}"></div>`;
+                });
+
+                html += `<div class="${classes}" data-date="${dateStr}">
+                    <span class="cal-day-number">${d}</span>
+                    <div class="appt-dots">${dots}</div>
+                </div>`;
+            }
+
+            const totalCells = startDayOfWeek + totalDays;
+            const remaining = (7 - (totalCells % 7)) % 7;
+            for (let i = 1; i <= remaining; i++) {
+                html += `<div class="cal-day other-month"><span class="cal-day-number">${i}</span></div>`;
+            }
+
+            html += `</div></div>`;
+            container.innerHTML = html;
+
+            container.querySelectorAll('.cal-day:not(.other-month)').forEach(el => {
+                el.addEventListener('click', () => {
+                    currentCalDate = new Date(el.dataset.date + 'T00:00:00');
+                    currentCalView = 'day';
+                    document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelector('[data-view="day"]').classList.add('active');
+                    renderCalendar();
+                });
+            });
+        }
+
+        function renderWeekView(container, title) {
+            const curr = new Date(currentCalDate);
+            const dayOfWeek = (curr.getDay() + 6) % 7;
+            const monday = new Date(curr);
+            monday.setDate(curr.getDate() - dayOfWeek);
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            
+            const fmt = d => d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+            title.textContent = `${fmt(monday)} - ${fmt(sunday)} ${curr.getFullYear()}`;
+
+            const dayNames = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            let html = `<div class="calendar-week"><div class="week-grid">`;
+            
+            for (let i = 0; i < 7; i++) {
+                const dayDate = new Date(monday);
+                dayDate.setDate(monday.getDate() + i);
+                const dateStr = formatDate(dayDate);
+                const dayAppts = appointments
+                    .filter(a => a.date === dateStr)
+                    .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+                const isToday = dayDate.getTime() === today.getTime();
+                const weekend = isWeekend(dayDate);
+                const holiday = isHoliday(dayDate);
+
+                let colClass = 'week-day-col';
+                if (weekend) colClass += ' weekend';
+                if (holiday) colClass += ' holiday';
+
+                let headerClass = 'week-day-header';
+                if (isToday) headerClass += ' today';
+                if (weekend) headerClass += ' weekend';
+
+                html += `<div class="${colClass}">
+                    <div class="${headerClass}">
+                        ${dayNames[i]}<br>${dayDate.getDate()}
+                        ${holiday ? '<div style="font-size:0.7rem;color:var(--accent);">🎉 Festivo</div>' : ''}
+                    </div>`;
+                
+                dayAppts.forEach(a => {
+                    const client = clients.find(c => c.id === a.clientId);
+                    const tr = getAppointmentTreatments(a);
+                    if (!client || tr.length === 0) return;
+                    const totalDuration = getAppointmentDuration(a);
+                    const endTime = getEndTime(a.time, totalDuration);
+                    const timeRange = endTime ? `${a.time} - ${endTime}` : a.time;
+                    
+                    html += `<div class="week-appt" style="border-left-color:${tr[0].color}" data-appt-id="${a.id}">
+                        <div class="week-appt-time" style="color:${tr[0].color}">${timeRange}</div>
+                        <div>${getClientFullName(client)}</div>
+                        <div style="color:#6B6B6B;font-size:0.75rem;">${getTreatmentsText(a)} • ${totalDuration}min</div>
+                    </div>`;
+                });
+                
+                html += `</div>`;
+            }
+            
+            html += `</div></div>`;
+            container.innerHTML = html;
+
+            // Click su appuntamento → dettaglio
+            container.querySelectorAll('.week-appt').forEach(el => {
+                el.addEventListener('click', () => openAppointmentDetailModal(el.dataset.apptId));
+            });
+        }
+
+        function renderDayView(container, title) {
+            const dateStr = formatDate(currentCalDate);
+            const weekend = isWeekend(currentCalDate);
+            const holiday = isHoliday(currentCalDate);
+            
+            title.textContent = currentCalDate.toLocaleDateString('it-IT', { 
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+            });
+
+            const dayAppts = appointments
+                .filter(a => a.date === dateStr)
+                .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
+            let headerClass = 'day-header';
+            if (weekend) headerClass += ' weekend';
+            if (holiday) headerClass += ' holiday';
+
+            let html = `<div class="calendar-day">
+                <div class="${headerClass}">
+                    ${currentCalDate.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    ${holiday ? '<div style="font-size:0.9rem;margin-top:5px;">🎉 Giorno festivo</div>' : ''}
+                </div>`;
+            
+            if (dayAppts.length === 0) {
+                html += `<div class="no-appts"><i class="fas fa-calendar-times"></i> Nessun appuntamento</div>`;
+            } else {
+                dayAppts.forEach(a => {
+                    const client = clients.find(c => c.id === a.clientId);
+                    const tr = getAppointmentTreatments(a);
+                    if (!client || tr.length === 0) return;
+                    const totalDuration = getAppointmentDuration(a);
+                    const endTime = getEndTime(a.time, totalDuration);
+                    const timeRange = endTime ? `${a.time} - ${endTime}` : a.time;
+                    
+                    html += `<div class="day-appt" style="border-left-color:${tr[0].color}" data-appt-id="${a.id}">
+                        <div class="day-appt-time" style="color:${tr[0].color}">${timeRange}</div>
+                        <div class="day-appt-info">
+                            <div class="day-appt-client">
+                                <div class="client-color-dot" style="background:${tr[0].color}"></div>
+                                ${getClientFullName(client)} • ${a.location}
+                            </div>
+                            <div class="day-appt-treatment">${getTreatmentsText(a)} • <i class="fas fa-clock"></i> ${totalDuration} min</div>
+                        </div>
+                    </div>`;
+                });
+            }
+            
+            html += `</div>`;
+            container.innerHTML = html;
+
+            // Click su appuntamento → dettaglio
+            container.querySelectorAll('.day-appt').forEach(el => {
+                el.addEventListener('click', () => openAppointmentDetailModal(el.dataset.apptId));
+            });
+        }
+
+        // ==========================================
+        // MODAL DETTAGLIO APPUNTAMENTO (da calendario)
+        // ==========================================
+        function openAppointmentDetailModal(apptId) {
+            const appt = appointments.find(a => a.id === apptId);
+            if (!appt) return;
+            currentAppointmentDetailId = apptId;
+
+            const client = clients.find(c => c.id === appt.clientId);
+            const tr = getAppointmentTreatments(appt);
+            if (!client || tr.length === 0) return;
+
+            const dateObj = new Date(appt.date + 'T00:00:00');
+            const formattedDate = dateObj.toLocaleDateString('it-IT', { 
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+            });
+            const totalDuration = getAppointmentDuration(appt);
+            const endTime = getEndTime(appt.time, totalDuration);
+            const timeRange = endTime ? `${appt.time} - ${endTime}` : appt.time;
+
+            let treatmentsHtml = tr.map(t => 
+                `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                    <div style="width:12px;height:12px;border-radius:50%;background:${t.color};"></div>
+                    <span>${t.name} (${t.duration} min)</span>
+                </div>`
+            ).join('');
+
+            document.getElementById('appointment-detail-content').innerHTML = `
+                <div style="margin-bottom:15px;">
+                    <div style="font-size:1.1rem;font-weight:500;margin-bottom:8px;">
+                        <i class="fas fa-user" style="color:var(--primary-dark);"></i> ${getClientFullName(client)}
+                    </div>
+                    ${client.phone ? `<div style="color:var(--muted);font-size:.9rem;"><i class="fas fa-phone"></i> ${client.phone}</div>` : ''}
+                </div>
+                <div style="margin-bottom:15px;">
+                    <div style="color:var(--muted);font-size:.9rem;margin-bottom:4px;">
+                        <i class="fas fa-calendar"></i> ${formattedDate}
+                    </div>
+                    <div style="color:var(--muted);font-size:.9rem;">
+                        <i class="fas fa-clock"></i> ${timeRange}
+                    </div>
+                </div>
+                <div style="margin-bottom:15px;">
+                    <div style="font-weight:500;margin-bottom:8px;">Trattamenti:</div>
+                    ${treatmentsHtml}
+                    <div style="margin-top:8px;color:var(--primary-dark);font-weight:500;">
+                        Totale: ${totalDuration} minuti
+                    </div>
+                </div>
+                <div>
+                    <span class="appt-badge ${appt.location.toLowerCase()}">${appt.location === 'IN' ? '🏥 IN Studio' : '🏠 OUT Domicilio'}</span>
+                    ${client.address && appt.location === 'OUT' ? `<div style="margin-top:8px;color:var(--muted);font-size:.9rem;"><i class="fas fa-map-marker-alt"></i> ${client.address}</div>` : ''}
+                </div>
+            `;
+
+            document.getElementById('appointment-detail-modal').classList.add('open');
+        }
+
+        document.getElementById('close-appointment-detail-modal').addEventListener('click', () => {
+            document.getElementById('appointment-detail-modal').classList.remove('open');
+            currentAppointmentDetailId = null;
+        });
+
+        document.getElementById('btn-edit-from-calendar').addEventListener('click', () => {
+            if (!currentAppointmentDetailId) return;
+            const appt = appointments.find(a => a.id === currentAppointmentDetailId);
+            document.getElementById('appointment-detail-modal').classList.remove('open');
+            if (appt) openEditForm(appt);
+        });
+
+        // ==========================================
+        // FORM APPUNTAMENTO
+        // ==========================================
+        function populateFormSelects() {
+            const clientSelect = document.getElementById('form-client');
+            clientSelect.innerHTML = '<option value="">Seleziona cliente...</option>';
+            clients.forEach(c => {
+                clientSelect.innerHTML += `<option value="${c.id}">${getClientFullName(c)}</option>`;
+            });
+            populateTreatmentSelects();
+            document.getElementById('form-date').value = formatDate(new Date());
+        }
+
+        function populateTreatmentSelects() {
+            ['form-treatment-1', 'form-treatment-2', 'form-treatment-3'].forEach((id, idx) => {
+                const sel = document.getElementById(id);
+                sel.innerHTML = idx === 0 
+                    ? '<option value="">Seleziona trattamento...</option>'
+                    : `<option value="">Nessun ${idx === 1 ? 'secondo' : 'terzo'} trattamento</option>`;
+                treatments.forEach(t => {
+                    sel.innerHTML += `<option value="${t.id}">${t.name} (${t.duration} min)</option>`;
+                });
+            });
+        }
+
+        document.getElementById('form-treatment-1').addEventListener('change', (e) => {
+            document.getElementById('treatment-2-group').style.display = e.target.value ? 'block' : 'none';
+            if (!e.target.value) {
+                document.getElementById('form-treatment-2').value = '';
+                document.getElementById('treatment-3-group').style.display = 'none';
+                document.getElementById('form-treatment-3').value = '';
+            }
+        });
+
+        document.getElementById('form-treatment-2').addEventListener('change', (e) => {
+            document.getElementById('treatment-3-group').style.display = e.target.value ? 'block' : 'none';
+            if (!e.target.value) document.getElementById('form-treatment-3').value = '';
+        });
+
+        function resetForm() {
+            document.getElementById('appointment-form').reset();
+            document.getElementById('form-id').value = '';
+            document.getElementById('form-title').innerHTML = '<i class="fas fa-plus-circle"></i> Nuovo Appuntamento';
+            document.getElementById('btn-cancel-edit').style.display = 'none';
+            document.getElementById('btn-back-to-client').style.display = 'none';
+            document.getElementById('form-date').value = formatDate(new Date());
+            document.getElementById('treatment-2-group').style.display = 'none';
+            document.getElementById('treatment-3-group').style.display = 'none';
+            clientFromDetail = null;
+        }
+
+        function openEditForm(appt) {
+            document.getElementById('form-title').innerHTML = '<i class="fas fa-edit"></i> Modifica Appuntamento';
+            document.getElementById('form-id').value = appt.id;
+            document.getElementById('form-client').value = appt.clientId;
+            document.getElementById('form-treatment-1').value = appt.treatmentIds[0] || '';
+            document.getElementById('form-date').value = appt.date;
+            document.getElementById('form-time').value = appt.time;
+            document.querySelector(`input[name="location"][value="${appt.location}"]`).checked = true;
+            
+            if (appt.treatmentIds[1]) {
+                document.getElementById('treatment-2-group').style.display = 'block';
+                document.getElementById('form-treatment-2').value = appt.treatmentIds[1];
+            } else {
+                document.getElementById('treatment-2-group').style.display = 'none';
+            }
+            
+            if (appt.treatmentIds[2]) {
+                document.getElementById('treatment-3-group').style.display = 'block';
+                document.getElementById('form-treatment-3').value = appt.treatmentIds[2];
+            } else {
+                document.getElementById('treatment-3-group').style.display = 'none';
+            }
+            
+            document.getElementById('btn-cancel-edit').style.display = 'block';
+            document.getElementById('btn-back-to-client').style.display = 'none';
+            clientFromDetail = null;
+            showView('view-new');
+        }
+
+        function openDuplicateForm(appt) {
+            resetForm();
+            document.getElementById('form-title').innerHTML = '<i class="fas fa-copy"></i> Duplica Appuntamento';
+            document.getElementById('form-client').value = appt.clientId;
+            document.getElementById('form-treatment-1').value = appt.treatmentIds[0] || '';
+            document.getElementById('form-time').value = appt.time;
+            document.querySelector(`input[name="location"][value="${appt.location}"]`).checked = true;
+            document.getElementById('form-date').value = '';
+            
+            if (appt.treatmentIds[1]) {
+                document.getElementById('treatment-2-group').style.display = 'block';
+                document.getElementById('form-treatment-2').value = appt.treatmentIds[1];
+            }
+            if (appt.treatmentIds[2]) {
+                document.getElementById('treatment-3-group').style.display = 'block';
+                document.getElementById('form-treatment-3').value = appt.treatmentIds[2];
+            }
+            
+            showView('view-new');
+        }
+
+        document.getElementById('btn-cancel-edit').addEventListener('click', () => {
+            resetForm();
+            showView('view-agenda');
+        });
+
+        document.getElementById('btn-back-to-client').addEventListener('click', () => {
+            if (clientFromDetail) {
+                const clientId = clientFromDetail;
+                resetForm();
+                showView('view-clients');
+                setTimeout(() => openClientDetail(clientId), 100);
+            } else {
+                resetForm();
+                showView('view-agenda');
+            }
+        });
+
+        document.getElementById('appointment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const editId = document.getElementById('form-id').value;
+            
+            const treatmentIds = [];
+            const t1 = document.getElementById('form-treatment-1').value;
+            const t2 = document.getElementById('form-treatment-2').value;
+            const t3 = document.getElementById('form-treatment-3').value;
+            if (t1) treatmentIds.push(t1);
+            if (t2) treatmentIds.push(t2);
+            if (t3) treatmentIds.push(t3);
+            
+            const apptData = {
+                clientId: document.getElementById('form-client').value,
+                treatmentIds: treatmentIds,
+                date: document.getElementById('form-date').value,
+                time: document.getElementById('form-time').value,
+                location: document.querySelector('input[name="location"]:checked').value
+            };
+            
+            const result = await saveAppointment(apptData, editId || null);
+            if (result) {
+                alert(editId ? '✅ Modificato!' : '✅ Salvato!');
+                const savedClientId = clientFromDetail;
+                resetForm();
+                if (savedClientId) {
+                    showView('view-clients');
+                    setTimeout(() => openClientDetail(savedClientId), 100);
+                } else {
+                    showView('view-agenda');
+                }
+            }
+        });
+
+        // ==========================================
+        // ANAGRAFICA CLIENTI
+        // ==========================================
+        function renderClients(filter = '') {
+            const list = document.getElementById('clients-list');
+            list.innerHTML = '';
+            
+            const filtered = clients.filter(c => {
+                const fullName = getClientFullName(c).toLowerCase();
+                return fullName.includes(filter.toLowerCase()) || 
+                       (c.phone && c.phone.includes(filter)) ||
+                       (c.email && c.email.toLowerCase().includes(filter.toLowerCase())) ||
+                       (c.address && c.address.toLowerCase().includes(filter.toLowerCase()));
+            });
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<p style="text-align:center;color:#6B6B6B;padding:40px;">Nessun cliente trovato</p>';
+                return;
+            }
+
+            filtered.sort((a, b) => getClientFullName(a).localeCompare(getClientFullName(b)));
+
+            filtered.forEach(client => {
+                const apptsCount = appointments.filter(a => a.clientId === client.id).length;
+                const card = document.createElement('div');
+                card.className = 'client-card';
+                card.innerHTML = `
+                    <div class="client-card-name">${getClientFullName(client)} ${client.gender ? `<span style="font-size:0.9rem;">${client.gender === 'F' ? '♀' : '♂'}</span>` : ''}</div>
+                    ${client.phone ? `<div class="client-card-info"><i class="fas fa-phone"></i> ${client.phone}</div>` : ''}
+                    ${client.email ? `<div class="client-card-info"><i class="fas fa-envelope"></i> ${client.email}</div>` : ''}
+                    ${client.address ? `<div class="client-card-info"><i class="fas fa-map-marker-alt"></i> ${client.address}</div>` : ''}
+                    <div class="client-card-info"><i class="fas fa-calendar"></i> ${apptsCount} appuntamenti</div>
+                `;
+                card.addEventListener('click', () => openClientDetail(client.id));
+                list.appendChild(card);
+            });
+        }
+
+        function openClientDetail(clientId) {
+            const client = clients.find(c => c.id === clientId);
+            if (!client) return;
+
+            document.getElementById('clients-list-view').style.display = 'none';
+            document.getElementById('client-form-view').style.display = 'none';
+            document.getElementById('client-detail-view').style.display = 'block';
+
+            const clientAppts = appointments
+                .filter(a => a.clientId === clientId)
+                .sort((a, b) => new Date(b.date + 'T' + b.time) - new Date(a.date + 'T' + a.time));
+
+            let apptsHtml = '';
+            if (clientAppts.length === 0) {
+                apptsHtml = '<p style="text-align:center;color:#6B6B6B;padding:20px;">Nessun appuntamento</p>';
+            } else {
+                clientAppts.forEach(a => {
+                    const tr = getAppointmentTreatments(a);
+                    if (tr.length === 0) return;
+                    const dateStr = new Date(a.date + 'T00:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' });
+                    apptsHtml += `
+                        <div class="appt-card" style="border-left-color:${tr[0].color};">
+                            <div class="appt-header">
+                                <span style="color:${tr[0].color};font-weight:500;">${getTreatmentsText(a)}</span>
+                                <span class="appt-badge ${a.location.toLowerCase()}">${a.location}</span>
+                            </div>
+                            <div class="appt-date"><i class="fas fa-calendar"></i> ${dateStr} • ${a.time}</div>
+                        </div>
+                    `;
+                });
+            }
+
+            document.getElementById('client-detail-content').innerHTML = `
+                <div class="client-detail-header">
+                    <div class="client-detail-name">${getClientFullName(client)} ${client.gender ? `<span style="font-size:1.3rem;">${client.gender === 'F' ? '♀' : '♂'}</span>` : ''}</div>
+                    ${client.phone ? `<div class="client-detail-info"><i class="fas fa-phone"></i> ${client.phone}</div>` : ''}
+                    ${client.email ? `<div class="client-detail-info"><i class="fas fa-envelope"></i> ${client.email}</div>` : ''}
+                    ${client.address ? `<div class="client-detail-info"><i class="fas fa-map-marker-alt"></i> ${client.address}</div>` : ''}
+                    ${client.notes ? `<div class="client-detail-info"><i class="fas fa-sticky-note"></i> ${client.notes}</div>` : ''}
+                    <div class="client-detail-actions">
+                        <button class="btn-secondary" onclick="editClient('${client.id}')">
+                            <i class="fas fa-edit"></i> Modifica
+                        </button>
+                        <button class="btn-secondary" style="color:#C0392B;" onclick="deleteClientConfirm('${client.id}')">
+                            <i class="fas fa-trash"></i> Elimina
+                        </button>
+                        <button class="btn-primary" onclick="exportClientDetail('${client.id}')">
+                            <i class="fas fa-file-export"></i> Esporta Scheda
+                        </button>
+                        <button class="btn-primary" onclick="newAppointmentForClient('${client.id}')">
+                            <i class="fas fa-plus"></i> Nuovo Appunt.
+                        </button>
+                    </div>
+                </div>
+                <h3 style="margin:25px 0 15px;"><i class="fas fa-history"></i> Storico Appuntamenti</h3>
+                <div class="cards-container">${apptsHtml}</div>
+            `;
+        }
+
+        function showClientsList() {
+            document.getElementById('clients-list-view').style.display = 'block';
+            document.getElementById('client-detail-view').style.display = 'none';
+            document.getElementById('client-form-view').style.display = 'none';
+        }
+
+        window.editClient = function(clientId) {
+            const client = clients.find(c => c.id === clientId);
+            if (!client) return;
+            document.getElementById('client-form-title').textContent = 'Modifica Cliente';
+            document.getElementById('client-form-id').value = client.id;
+            document.getElementById('client-name').value = client.name;
+            document.getElementById('client-surname').value = client.surname || '';
+            document.getElementById('client-gender').value = client.gender || '';
+            document.getElementById('client-phone').value = client.phone || '';
+            document.getElementById('client-email').value = client.email || '';
+            document.getElementById('client-address').value = client.address || '';
+            document.getElementById('client-notes').value = client.notes || '';
+            document.getElementById('client-detail-view').style.display = 'none';
+            document.getElementById('client-form-view').style.display = 'block';
+        };
+
+        window.deleteClientConfirm = async function(clientId) {
+            const hasAppts = appointments.some(a => a.clientId === clientId);
+            if (hasAppts) {
+                alert('⚠️ Impossibile eliminare: il cliente ha appuntamenti associati.');
+                return;
+            }
+            if (confirm('Eliminare questo cliente?')) {
+                await deleteClient(clientId);
+                showClientsList();
+                renderClients();
+                populateFormSelects();
+                populateFilters();
+            }
+        };
+
+        window.newAppointmentForClient = function(clientId) {
+            resetForm();
+            clientFromDetail = clientId;
+            document.getElementById('form-client').value = clientId;
+            document.getElementById('btn-back-to-client').style.display = 'flex';
+            showView('view-new');
+        };
+
+        window.exportClientDetail = function(clientId) {
+            const client = clients.find(c => c.id === clientId);
+            if (!client) return;
+
+            const clientAppts = appointments
+                .filter(a => a.clientId === clientId)
+                .sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
+
+            const clientData = [
+                { 'Campo': 'Nome', 'Valore': client.name },
+                { 'Campo': 'Cognome', 'Valore': client.surname || '' },
+                { 'Campo': 'Sesso', 'Valore': client.gender || '' },
+                { 'Campo': 'Telefono', 'Valore': client.phone || '' },
+                { 'Campo': 'Email', 'Valore': client.email || '' },
+                { 'Campo': 'Indirizzo', 'Valore': client.address || '' },
+                { 'Campo': 'Note', 'Valore': client.notes || '' }
+            ];
+
+            const apptsData = clientAppts.map(a => {
+                const tr = getAppointmentTreatments(a);
+                const totalDuration = getAppointmentDuration(a);
+                const endTime = getEndTime(a.time, totalDuration);
+                return {
+                    'Data': formatDateIT(a.date),
+                    'Ora inizio': a.time,
+                    'Ora fine': endTime,
+                    'Trattamento 1': tr[0] ? tr[0].name : '',
+                    'Trattamento 2': tr[1] ? tr[1].name : '',
+                    'Trattamento 3': tr[2] ? tr[2].name : '',
+                    'Durata totale (min)': totalDuration,
+                    'Luogo': a.location
+                };
+            });
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(clientData), 'Dati Cliente');
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(apptsData), 'Storico Appuntamenti');
+
+            const fileName = `scheda_${getClientFullName(client).replace(/\s+/g, '_')}_${formatDateIT(formatDate(new Date())).replace(/\//g, '-')}`;
+            XLSX.writeFile(wb, `${fileName}.xlsx`);
+        };
+
+        document.getElementById('btn-back-clients').addEventListener('click', showClientsList);
+        document.getElementById('btn-new-client').addEventListener('click', () => {
+            document.getElementById('client-form-title').textContent = 'Nuovo Cliente';
+            document.getElementById('client-form').reset();
+            document.getElementById('client-form-id').value = '';
+            document.getElementById('clients-list-view').style.display = 'none';
+            document.getElementById('client-form-view').style.display = 'block';
+        });
+        document.getElementById('btn-cancel-client').addEventListener('click', showClientsList);
+
+        document.getElementById('search-clients').addEventListener('input', (e) => {
+            renderClients(e.target.value);
+        });
+
+        document.getElementById('client-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const editId = document.getElementById('client-form-id').value;
+            const data = {
+                name: document.getElementById('client-name').value.trim(),
+                surname: document.getElementById('client-surname').value.trim(),
+                gender: document.getElementById('client-gender').value,
+                phone: document.getElementById('client-phone').value.trim(),
+                email: document.getElementById('client-email').value.trim(),
+                address: document.getElementById('client-address').value.trim(),
+                notes: document.getElementById('client-notes').value.trim()
+            };
+            
+            const result = await saveClient(data, editId || null);
+            if (result) {
+                alert(editId ? '✅ Cliente modificato!' : '✅ Cliente aggiunto!');
+                showClientsList();
+                renderClients();
+                populateFormSelects();
+                populateFilters();
+            }
+        });
+
+        // ==========================================
+        // IMPORT CLIENTI DA EXCEL
+        // ==========================================
+        document.getElementById('import-clients-file').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                    let imported = 0;
+                    for (const row of jsonData) {
+                        const name = (row.Nome || row.nome || '').toString().trim();
+                        if (!name) continue;
+                        
+                        await saveClient({
+                            name: name,
+                            surname: (row.Cognome || row.cognome || '').toString().trim(),
+                            gender: (row.Sesso || row.sesso || '').toString().trim(),
+                            phone: (row.Telefono || row.telefono || '').toString().trim(),
+                            email: (row.Email || row.email || '').toString().trim(),
+                            address: (row.Indirizzo || row.indirizzo || '').toString().trim(),
+                            notes: (row.Note || row.note || '').toString().trim()
+                        });
+                        imported++;
+                    }
+
+                    alert(`✅ Importati ${imported} clienti!`);
+                    renderClients();
+                    populateFormSelects();
+                    populateFilters();
+                } catch (err) {
+                    alert('❌ Errore nel leggere il file: ' + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            e.target.value = '';
+        });
+
+        // ==========================================
+        // IMPORT APPUNTAMENTI DA EXCEL
+        // ==========================================
+        document.getElementById('import-appointments-file').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                    let imported = 0;
+                    for (const row of jsonData) {
+                        let date = (row.Data || row.data || '').toString().trim();
+                        const time = (row.Ora || row.ora || '').toString().trim();
+                        const clientName = (row.Cliente || row.cliente || '').toString().trim();
+                        const treatment1 = (row['Trattamento 1'] || row['trattamento 1'] || '').toString().trim();
+                        const treatment2 = (row['Trattamento 2'] || row['trattamento 2'] || '').toString().trim();
+                        const treatment3 = (row['Trattamento 3'] || row['trattamento 3'] || '').toString().trim();
+                        const location = (row.Luogo || row.luogo || 'IN').toString().trim().toUpperCase();
+
+                        if (!date || !time || !clientName || !treatment1) continue;
+
+                        // Converti data da gg/mm/aaaa a aaaa-mm-gg
+                        date = parseDateIT(date);
+
+                        const client = clients.find(c => getClientFullName(c).toLowerCase() === clientName.toLowerCase());
+                        if (!client) continue;
+
+                        const treatmentIds = [];
+                        const t1 = treatments.find(t => t.name.toLowerCase() === treatment1.toLowerCase());
+                        if (t1) treatmentIds.push(t1.id);
+                        if (treatment2) {
+                            const t2 = treatments.find(t => t.name.toLowerCase() === treatment2.toLowerCase());
+                            if (t2) treatmentIds.push(t2.id);
+                        }
+                        if (treatment3) {
+                            const t3 = treatments.find(t => t.name.toLowerCase() === treatment3.toLowerCase());
+                            if (t3) treatmentIds.push(t3.id);
+                        }
+
+                        if (treatmentIds.length === 0) continue;
+
+                        await saveAppointment({
+                            clientId: client.id,
+                            treatmentIds: treatmentIds,
+                            date: date,
+                            time: time,
+                            location: location === 'OUT' ? 'OUT' : 'IN'
+                        });
+                        imported++;
+                    }
+
+                    alert(`✅ Importati ${imported} appuntamenti!`);
+                } catch (err) {
+                    alert('❌ Errore nel leggere il file: ' + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            e.target.value = '';
+        });
+
+        // ==========================================
+        // MANAGEMENT
+        // ==========================================
+        document.getElementById('btn-management-login').addEventListener('click', () => {
+            const pwd = document.getElementById('management-password').value;
+            if (pwd === ADMIN_PASSWORD) {
+                managementUnlocked = true;
+                document.getElementById('management-password').value = '';
+                document.getElementById('login-error').textContent = '';
+                showView('view-management');
+            } else {
+                document.getElementById('login-error').textContent = '❌ Password errata';
+            }
+        });
+
+        document.getElementById('btn-logout-management').addEventListener('click', () => {
+            managementUnlocked = false;
+            showView('view-management');
+        });
+
+        document.querySelectorAll('.mgmt-tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mgmt-tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.mgmt-tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(`mgmt-tab-${btn.dataset.tab}`).classList.add('active');
+            });
+        });
+
+        // ==========================================
+        // TRATTAMENTI
+        // ==========================================
+        function renderTreatments() {
+            const list = document.getElementById('treatments-list');
+            list.innerHTML = '';
+            
+            treatments.forEach(t => {
+                const card = document.createElement('div');
+                card.className = 'treatment-card';
+                card.style.borderLeftColor = t.color;
+                card.innerHTML = `
+                    <div class="treatment-color-preview" style="background:${t.color}"></div>
+                    <div class="treatment-info">
+                        <div class="treatment-name">${t.name}</div>
+                        <div class="treatment-meta">
+                            <span><i class="fas fa-clock"></i> ${t.duration} min</span>
+                            <span><i class="fas fa-sync"></i> Ogni ${t.defaultFrequency} gg</span>
+                            ${t.desc ? `<span><i class="fas fa-info-circle"></i> ${t.desc}</span>` : ''}
+                        </div>
+                    </div>
+                    <div>
+                        <button class="btn-icon" onclick="editTreatment('${t.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-icon" onclick="deleteTreatmentConfirm('${t.id}')" style="color:#C0392B;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        window.editTreatment = function(id) {
+            const t = treatments.find(x => x.id === id);
+            if (!t) return;
+            document.getElementById('treatment-form-title').textContent = 'Modifica Trattamento';
+            document.getElementById('treatment-form-id').value = t.id;
+            document.getElementById('treatment-name').value = t.name;
+            document.getElementById('treatment-duration').value = t.duration;
+            document.getElementById('treatment-frequency').value = t.defaultFrequency;
+            document.getElementById('treatment-color').value = t.color;
+            document.getElementById('treatment-desc').value = t.desc || '';
+            document.getElementById('management-content').style.display = 'none';
+            document.getElementById('treatment-form-view').style.display = 'block';
+        };
+
+        window.deleteTreatmentConfirm = async function(id) {
+            const hasAppts = appointments.some(a => a.treatmentIds.includes(id));
+            if (hasAppts) {
+                alert('⚠️ Impossibile eliminare: ci sono appuntamenti associati.');
+                return;
+            }
+            if (confirm('Eliminare questo trattamento?')) {
+                await deleteTreatment(id);
+                renderTreatments();
+                populateFormSelects();
+                populateFilters();
+            }
+        };
+
+        document.getElementById('btn-new-treatment').addEventListener('click', () => {
+            document.getElementById('treatment-form-title').textContent = 'Nuovo Trattamento';
+            document.getElementById('treatment-form').reset();
+            document.getElementById('treatment-form-id').value = '';
+            document.getElementById('treatment-color').value = '#B87D7D';
+            document.getElementById('management-content').style.display = 'none';
+            document.getElementById('treatment-form-view').style.display = 'block';
+        });
+
+        document.getElementById('btn-cancel-treatment').addEventListener('click', () => {
+            document.getElementById('treatment-form-view').style.display = 'none';
+            document.getElementById('management-content').style.display = 'block';
+        });
+
+        document.getElementById('treatment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const editId = document.getElementById('treatment-form-id').value;
+            const data = {
+                name: document.getElementById('treatment-name').value.trim(),
+                duration: parseInt(document.getElementById('treatment-duration').value),
+                defaultFrequency: parseInt(document.getElementById('treatment-frequency').value) || 30,
+                color: document.getElementById('treatment-color').value,
+                desc: document.getElementById('treatment-desc').value.trim()
+            };
+            
+            const result = await saveTreatment(data, editId || null);
+            if (result) {
+                alert(editId ? '✅ Trattamento modificato!' : '✅ Trattamento aggiunto!');
+                document.getElementById('treatment-form-view').style.display = 'none';
+                document.getElementById('management-content').style.display = 'block';
+                renderTreatments();
+                populateFormSelects();
+                populateFilters();
+            }
+        });
+
+        // ==========================================
+        // IMPORT TRATTAMENTI DA EXCEL
+        // ==========================================
+        document.getElementById('import-treatments-file').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                    let imported = 0;
+                    for (const row of jsonData) {
+                        const name = (row.Nome || row.nome || '').toString().trim();
+                        const duration = parseInt(row.Durata || row.durata || 0);
+                        if (!name || !duration) continue;
+                        
+                        await saveTreatment({
+                            name: name,
+                            duration: duration,
+                            defaultFrequency: parseInt(row.Frequenza || row.frequenza || 30),
+                            color: (row.Colore || row.colore || '#B87D7D').toString().trim(),
+                            desc: (row.Descrizione || row.descrizione || '').toString().trim()
+                        });
+                        imported++;
+                    }
+
+                    alert(`✅ Importati ${imported} trattamenti!`);
+                    renderTreatments();
+                    populateFormSelects();
+                    populateFilters();
+                } catch (err) {
+                    alert('❌ Errore nel leggere il file: ' + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            e.target.value = '';
+        });
+
+        // ==========================================
+        // TEMPLATE MESSAGGI
+        // ==========================================
+        function renderMessageTemplates() {
+            const list = document.getElementById('message-templates-list');
+            list.innerHTML = '';
+            
+            const today = formatDate(new Date());
+            
+            messageTemplates.forEach(t => {
+                const isActive = (!t.startDate && !t.endDate) || 
+                                (t.startDate && t.endDate && today >= t.startDate && today <= t.endDate) ||
+                                (t.startDate && !t.endDate && today >= t.startDate) ||
+                                (!t.startDate && t.endDate && today <= t.endDate);
+                
+                const card = document.createElement('div');
+                card.className = 'message-template-card';
+                card.innerHTML = `
+                    <div class="message-template-name">
+                        <i class="fas fa-comment-dots" style="color:var(--accent);"></i>
+                        ${t.name}
+                        <span class="${isActive ? 'template-active' : 'template-inactive'}">
+                            ${isActive ? 'Attivo' : 'Inattivo'}
+                        </span>
+                    </div>
+                    ${t.startDate || t.endDate ? `
+                        <div class="message-template-dates">
+                            <i class="fas fa-calendar-day"></i>
+                            ${t.startDate ? formatDateIT(t.startDate) : 'Sempre'} 
+                            - 
+                            ${t.endDate ? formatDateIT(t.endDate) : 'Sempre'}
+                        </div>
+                    ` : ''}
+                    <div class="message-template-preview">${t.content}</div>
+                    <div class="message-template-actions">
+                        <button class="btn-icon" onclick="editMessageTemplate('${t.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-icon" onclick="duplicateMessageTemplate('${t.id}')">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        <button class="btn-icon" onclick="deleteMessageTemplateConfirm('${t.id}')" style="color:#C0392B;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        window.editMessageTemplate = function(id) {
+            const t = messageTemplates.find(x => x.id === id);
+            if (!t) return;
+            document.getElementById('message-form-title').textContent = 'Modifica Template';
+            document.getElementById('message-form-id').value = t.id;
+            document.getElementById('message-name').value = t.name;
+            document.getElementById('message-start-date').value = t.startDate || '';
+            document.getElementById('message-end-date').value = t.endDate || '';
+            document.getElementById('message-content').value = t.content;
+            document.getElementById('management-content').style.display = 'none';
+            document.getElementById('message-form-view').style.display = 'block';
+        };
+
+        window.duplicateMessageTemplate = async function(id) {
+            const t = messageTemplates.find(x => x.id === id);
+            if (!t) return;
+            await saveMessageTemplate({
+                name: t.name + ' (copia)',
+                content: t.content,
+                startDate: t.startDate,
+                endDate: t.endDate
+            });
+            alert('✅ Template duplicato!');
+        };
+
+        window.deleteMessageTemplateConfirm = async function(id) {
+            if (confirm('Eliminare questo template?')) {
+                await deleteMessageTemplate(id);
+            }
+        };
+
+        document.getElementById('btn-new-message-template').addEventListener('click', () => {
+            document.getElementById('message-form-title').textContent = 'Nuovo Template';
+            document.getElementById('message-form').reset();
+            document.getElementById('message-form-id').value = '';
+            document.getElementById('management-content').style.display = 'none';
+            document.getElementById('message-form-view').style.display = 'block';
+        });
+
+        document.getElementById('btn-cancel-message').addEventListener('click', () => {
+            document.getElementById('message-form-view').style.display = 'none';
+            document.getElementById('management-content').style.display = 'block';
+        });
+
+        document.getElementById('message-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const editId = document.getElementById('message-form-id').value;
+            const data = {
+                name: document.getElementById('message-name').value.trim(),
+                content: document.getElementById('message-content').value.trim(),
+                startDate: document.getElementById('message-start-date').value,
+                endDate: document.getElementById('message-end-date').value
+            };
+            
+            const result = await saveMessageTemplate(data, editId || null);
+            if (result) {
+                alert(editId ? '✅ Template modificato!' : '✅ Template aggiunto!');
+                document.getElementById('message-form-view').style.display = 'none';
+                document.getElementById('management-content').style.display = 'block';
+                renderMessageTemplates();
+            }
+        });
+
+        // ==========================================
+        // EXPORT CALENDARIO
+        // ==========================================
+        document.getElementById('btn-export-calendar').addEventListener('click', () => {
+            document.getElementById('export-modal').classList.add('open');
+        });
+
+        document.getElementById('close-export-modal').addEventListener('click', () => {
+            document.getElementById('export-modal').classList.remove('open');
+        });
+
+        document.querySelectorAll('.export-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const format = btn.dataset.format;
+                exportCalendar(format);
+                document.getElementById('export-modal').classList.remove('open');
+            });
+        });
+
+        function exportCalendar(format) {
+            const exportData = appointments.map(a => {
+                const client = clients.find(c => c.id === a.clientId);
+                const tr = getAppointmentTreatments(a);
+                const totalDuration = getAppointmentDuration(a);
+                const endTime = getEndTime(a.time, totalDuration);
+                return {
+                    'Data': formatDateIT(a.date),
+                    'Ora inizio': a.time,
+                    'Ora fine': endTime,
+                    'Cliente': client ? getClientFullName(client) : '',
+                    'Telefono': client ? (client.phone || '') : '',
+                    'Trattamento 1': tr[0] ? tr[0].name : '',
+                    'Trattamento 2': tr[1] ? tr[1].name : '',
+                    'Trattamento 3': tr[2] ? tr[2].name : '',
+                    'Durata totale (min)': totalDuration,
+                    'Luogo': a.location
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Appuntamenti');
+
+            const fileName = `calendario_${formatDateIT(formatDate(new Date())).replace(/\//g, '-')}`;
+            if (format === 'xlsx') {
+                XLSX.writeFile(wb, `${fileName}.xlsx`);
+            } else {
+                XLSX.writeFile(wb, `${fileName}.csv`, { bookType: 'csv' });
+            }
+        }
+
+        // ==========================================
+        // STATISTICHE
+        // ==========================================
+        function populateFilters() {
+            const clientSelect = document.getElementById('filter-client');
+            const treatmentSelect = document.getElementById('filter-treatment');
+            clientSelect.innerHTML = '<option value="">Tutti i Clienti</option>';
+            treatmentSelect.innerHTML = '<option value="">Tutti i Trattamenti</option>';
+            clients.forEach(c => {
+                clientSelect.innerHTML += `<option value="${c.id}">${getClientFullName(c)}</option>`;
+            });
+            treatments.forEach(t => {
+                treatmentSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+            });
+        }
+
+        function calculateStats() {
+            const clientId = document.getElementById('filter-client').value;
+            const treatmentId = document.getElementById('filter-treatment').value;
+
+            let filtered = [...appointments];
+            if (clientId) filtered = filtered.filter(a => a.clientId === clientId);
+            if (treatmentId) filtered = filtered.filter(a => a.treatmentIds.includes(treatmentId));
+
+            let totalTreatments = 0;
+            filtered.forEach(a => {
+                if (treatmentId) {
+                    totalTreatments += a.treatmentIds.filter(tid => tid === treatmentId).length;
+                } else {
+                    totalTreatments += a.treatmentIds.length;
+                }
+            });
+
+            document.getElementById('stat-count').innerText = totalTreatments;
+
+            if (filtered.length === 0) {
+                document.getElementById('stat-freq').innerText = 'N/A';
+                document.getElementById('stat-freq-rec').innerText = 'Frequenza consigliata: -';
+                document.getElementById('stat-next').innerText = 'N/A';
+                return;
+            }
+
+            filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            let realFrequency = 0;
+            let recommendedFrequency = null;
+            
+            if (filtered.length > 1) {
+                let totalDays = 0;
+                for (let i = 1; i < filtered.length; i++) {
+                    const diffTime = Math.abs(new Date(filtered[i].date) - new Date(filtered[i-1].date));
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    totalDays += diffDays;
+                }
+                realFrequency = Math.round(totalDays / (filtered.length - 1));
+                document.getElementById('stat-freq').innerText = `Ogni ${realFrequency} giorni`;
+            } else {
+                document.getElementById('stat-freq').innerText = 'Dati insufficienti';
+            }
+
+            if (treatmentId) {
+                const treatment = treatments.find(t => t.id === treatmentId);
+                if (treatment) recommendedFrequency = treatment.defaultFrequency;
+            } else if (filtered.length > 0) {
+                const allTreatmentIds = [];
+                filtered.forEach(a => allTreatmentIds.push(...a.treatmentIds));
+                const uniqueTreatmentIds = [...new Set(allTreatmentIds)];
+                const avgRec = uniqueTreatmentIds.reduce((sum, tid) => {
+                    const t = treatments.find(x => x.id === tid);
+                    return sum + (t ? t.defaultFrequency : 0);
+                }, 0) / uniqueTreatmentIds.length;
+                recommendedFrequency = Math.round(avgRec);
+            }
+
+            if (recommendedFrequency) {
+                document.getElementById('stat-freq-rec').innerText = `Frequenza consigliata: ogni ${recommendedFrequency} giorni`;
+            } else {
+                document.getElementById('stat-freq-rec').innerText = 'Frequenza consigliata: -';
+            }
+
+            const freqToUse = realFrequency || recommendedFrequency || 30;
+            const lastDate = new Date(filtered[filtered.length - 1].date);
+            const nextDate = new Date(lastDate);
+            nextDate.setDate(nextDate.getDate() + freqToUse);
+            document.getElementById('stat-next').innerText = nextDate.toLocaleDateString('it-IT', { 
+                day: 'numeric', month: 'long', year: 'numeric' 
+            });
+        }
+
+        document.getElementById('filter-client').addEventListener('change', calculateStats);
+        document.getElementById('filter-treatment').addEventListener('change', calculateStats);
+
+        // ==========================================
+        // RENDER ALL
+        // ==========================================
+        function renderAll() {
+            renderAppointments();
+            populateFormSelects();
+            populateFilters();
+            calculateStats();
+        }
+
+        // ==========================================
+        // 🔥 INIT 🔥
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Controlla se Firebase è configurato
+            if (firebaseConfig.apiKey === "LA_TUA_API_KEY_QUI") {
+                alert('⚠️ ATTENZIONE: Configura le tue Firebase API Key!\n\nApri il file HTML e cerca "firebaseConfig". Sostituisci i valori con quelli del tuo progetto Firebase.');
+                showLoading(false);
+                return;
+            }
+            
+            await loadAllData();
+        });
+    </script>
+</body>
+</html>
