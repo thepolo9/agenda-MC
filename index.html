@@ -2453,19 +2453,3 @@ authDomain: "agenda-mc-97a20.firebaseapp.com",
             calculateStats();
         }
 
-        // ==========================================
-        // 🔥 INIT 🔥
-        // ==========================================
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Controlla se Firebase è configurato
-            if (firebaseConfig.apiKey === "LA_TUA_API_KEY_QUI") {
-                alert('⚠️ ATTENZIONE: Configura le tue Firebase API Key!\n\nApri il file HTML e cerca "firebaseConfig". Sostituisci i valori con quelli del tuo progetto Firebase.');
-                showLoading(false);
-                return;
-            }
-            
-            await loadAllData();
-        });
-    </script>
-</body>
-</html>
