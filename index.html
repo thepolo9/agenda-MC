@@ -88,6 +88,8 @@
 
         .cards-container { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; }
         .appt-card { background: #fff; padding: 16px; border-radius: var(--radius); border-left: 5px solid var(--primary); box-shadow: 0 2px 10px rgba(0,0,0,.06); position: relative; transition: all .2s; min-width: 0; }
+        .appt-card.clickable { cursor: pointer; }
+        .appt-card.clickable:active { transform: scale(0.99); }
         .appt-card.past { opacity: .55; filter: grayscale(35%); }
         .appt-card.past .appt-client { text-decoration: line-through; color: var(--muted); }
 
@@ -144,20 +146,23 @@
         .week-day-col.holiday { background: var(--accent-light); border: 2px solid var(--accent); }
         .week-day-header { text-align: center; font-weight: 600; font-size: .8rem; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
         .week-day-header.today, .week-day-header.weekend { color: var(--primary-dark); }
-        .week-appt { background: #fff; padding: 7px 6px; border-radius: 8px; border-left: 3px solid var(--primary); margin-bottom: 7px; font-size: .72rem; overflow-wrap: anywhere; }
+        .week-appt { background: #fff; padding: 7px 6px; border-radius: 8px; border-left: 3px solid var(--primary); margin-bottom: 7px; font-size: .72rem; overflow-wrap: anywhere; cursor: pointer; transition: all .2s; }
+        .week-appt:active { transform: scale(0.98); }
         .week-appt-time { font-weight: 600; margin-bottom: 3px; }
 
         .calendar-day { background: #fff; padding: 18px; border-radius: var(--radius); box-shadow: 0 2px 10px rgba(0,0,0,.06); }
         .day-header { text-align: center; font-size: 1.2rem; color: var(--primary-dark); padding-bottom: 14px; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
         .day-header.holiday { color: var(--accent); border-bottom: 2px solid var(--accent); }
-        .day-appt { display: flex; gap: 12px; padding: 14px; background: var(--bg); border-radius: 12px; border-left: 4px solid var(--primary); margin-bottom: 10px; }
+        .day-appt { display: flex; gap: 12px; padding: 14px; background: var(--bg); border-radius: 12px; border-left: 4px solid var(--primary); margin-bottom: 10px; cursor: pointer; transition: all .2s; }
+        .day-appt:active { transform: scale(0.98); }
         .day-appt-time { font-weight: 600; min-width: 82px; font-size: .95rem; }
         .day-appt-info { flex: 1; min-width: 0; }
         .day-appt-client { display: flex; align-items: center; gap: 8px; font-weight: 500; margin-bottom: 4px; flex-wrap: wrap; }
         .day-appt-treatment { font-size: .85rem; color: var(--muted); }
         .no-appts { text-align: center; padding: 40px 15px; color: var(--muted); }
 
-        .client-card { background: #fff; padding: 16px; border-radius: var(--radius); box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+        .client-card { background: #fff; padding: 16px; border-radius: var(--radius); box-shadow: 0 2px 10px rgba(0,0,0,.06); cursor: pointer; transition: all .2s; }
+        .client-card:active { transform: scale(0.98); }
         .client-card-name { font-weight: 500; font-size: 1.05rem; margin-bottom: 6px; }
         .client-card-info { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--muted); margin-bottom: 3px; overflow-wrap: anywhere; }
         .client-card-info i { width: 15px; color: var(--primary-dark); flex-shrink: 0; }
@@ -228,6 +233,19 @@
         .spinner { width: 40px; height: 40px; border: 4px solid var(--primary-light); border-top-color: var(--primary-dark); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* MOBILE */
+        @media (max-width: 767px) {
+            input, select, textarea { font-size: 16px !important; }
+            input[type="color"] { font-size: inherit !important; }
+            .app-content { padding: 16px 12px; }
+            .view-header h2 { font-size: 1.2rem; }
+            .client-detail-actions > button { flex: 1 1 100%; }
+            .bottom-nav { padding: 8px 2px calc(8px + env(safe-area-inset-bottom, 0px)); }
+            .nav-btn { font-size: .58rem; padding: 4px 2px; }
+            .nav-btn .icon { font-size: 1.1rem; }
+        }
+
+        /* TABLET */
         @media (min-width: 480px) { .cal-day { aspect-ratio: 1; min-height: 0; } .app-content { padding: 24px; } }
         @media (min-width: 768px) and (max-width: 1024px) {
             body { padding-bottom: 0; padding-left: 220px; }
@@ -239,6 +257,8 @@
             .view-header h2 { font-size: 1.6rem; }
             .client-detail-actions > button { flex: 1 1 auto; }
         }
+
+        /* DESKTOP */
         @media (min-width: 1025px) {
             body { padding-bottom: 0; padding-left: 240px; }
             .bottom-nav { flex-direction: column; top: 0; bottom: 0; left: 0; right: auto; width: 240px; padding: 28px 0; gap: 6px; border-top: none; border-right: 1px solid var(--border); box-shadow: 2px 0 12px rgba(0,0,0,.06); }
@@ -249,7 +269,6 @@
             .view-header h2 { font-size: 1.6rem; }
             .client-detail-actions > button { flex: 1 1 auto; }
         }
-        @media (max-width: 767px) { input, select, textarea { font-size: 16px !important; } input[type="color"] { font-size: inherit !important; } }
     </style>
 </head>
 <body>
@@ -355,9 +374,15 @@
                         <div class="form-group"><label for="client-name">Nome *</label><input type="text" id="client-name" required></div>
                         <div class="form-group"><label for="client-surname">Cognome</label><input type="text" id="client-surname"></div>
                     </div>
-                    <div class="form-group">
-                        <label for="client-gender"><i class="fas fa-venus-mars"></i> Sesso</label>
-                        <select id="client-gender"><option value="">Non specificato</option><option value="F">Femmina</option><option value="M">Maschio</option></select>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="client-gender"><i class="fas fa-venus-mars"></i> Sesso</label>
+                            <select id="client-gender"><option value="">Non specificato</option><option value="F">Femmina</option><option value="M">Maschio</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="client-birthday"><i class="fas fa-birthday-cake"></i> Compleanno</label>
+                            <input type="date" id="client-birthday">
+                        </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group"><label for="client-phone"><i class="fas fa-phone"></i> Telefono</label><input type="tel" id="client-phone"></div>
@@ -423,7 +448,7 @@
                         <div class="form-group"><label for="treatment-duration"><i class="fas fa-clock"></i> Durata (minuti) *</label><input type="number" id="treatment-duration" min="5" step="5" required></div>
                         <div class="form-group"><label for="treatment-frequency"><i class="fas fa-sync"></i> Frequenza (giorni)</label><input type="number" id="treatment-frequency" min="1" value="30"></div>
                     </div>
-                    <div class="form-group"><label for="treatment-color"><i class="fas fa-palette"></i> Colore identificativo</label><input type="color" id="treatment-color" value="#B87D7D"></div>
+                    <div class="form-group"><label for="treatment-color"><i class="fas fa-palette"></i> Colore identificativo</label><input type="color" id="treatment-color" value="#F4C2C2"></div>
                     <div class="form-group"><label for="treatment-desc"><i class="fas fa-info-circle"></i> Descrizione</label><textarea id="treatment-desc" rows="2"></textarea></div>
                     <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Salva Trattamento</button>
                 </form>
@@ -624,7 +649,6 @@ const firebaseConfig = {
                     }
                 });
 
-                // Crea template di default se la collezione è vuota
                 if (messageTemplates.length === 0) {
                     await seedDefaultTemplates();
                 }
@@ -638,7 +662,11 @@ const firebaseConfig = {
             }
         }
 
+        // ==========================================
+        // TEMPLATE MESSAGGI DI DEFAULT (con date)
+        // ==========================================
         async function seedDefaultTemplates() {
+            const year = new Date().getFullYear();
             const defaultTemplates = [
                 {
                     name: 'Standard IN',
@@ -653,16 +681,28 @@ const firebaseConfig = {
                     endDate: ''
                 },
                 {
-                    name: 'Halloween 2026',
+                    name: 'Halloween',
                     content: '🎃 Ciao {nome}!\n\nPreparati per un appuntamento da brivido! {trattamento} {data} {ora} {luogo}.\n\nNon mancare! ✨',
-                    startDate: '2026-10-20',
-                    endDate: '2026-10-31'
+                    startDate: `${year}-10-20`,
+                    endDate: `${year}-10-31`
                 },
                 {
-                    name: 'Natale 2026',
+                    name: 'Natale',
                     content: '🎄 Ciao {nome}!\n\nRegalati un momento di benessere! {trattamento} {data} {ora} {luogo}.\n\nBuone feste! 🎄✨',
-                    startDate: '2026-12-01',
-                    endDate: '2026-12-31'
+                    startDate: `${year}-12-01`,
+                    endDate: `${year}-12-31`
+                },
+                {
+                    name: 'San Valentino',
+                    content: '💝 Ciao {nome}!\n\nFai un regalo a te stessa/o! {trattamento} {data} {ora} {luogo}.\n\nTi aspetto! 💝',
+                    startDate: `${year}-02-01`,
+                    endDate: `${year}-02-14`
+                },
+                {
+                    name: 'Estate',
+                    content: '☀️ Ciao {nome}!\n\nPreparati per l\'estate con il tuo {trattamento}! {data} {ora} {luogo}.\n\nTi aspetto! ☀️',
+                    startDate: `${year}-06-01`,
+                    endDate: `${year}-08-31`
                 }
             ];
 
@@ -1119,7 +1159,7 @@ const firebaseConfig = {
                     <div style="margin-top:8px;color:var(--primary-dark);font-weight:500;">Totale: ${totalDuration} minuti</div>
                 </div>
                 <div>
-                    <span class="appt-badge ${appt.location.toLowerCase()}">${appt.location === 'IN' ? '🏥 IN Studio' : '🏠 OUT Domicilio'}</span>
+                    <span class="appt-badge ${appt.location.toLowerCase()}">${appt.location === 'IN' ? ' IN Studio' : '🏠 OUT Domicilio'}</span>
                     ${client.address && appt.location === 'OUT' ? `<div style="margin-top:8px;color:var(--muted);font-size:.9rem;"><i class="fas fa-map-marker-alt"></i> ${client.address}</div>` : ''}
                 </div>
             `;
@@ -1279,17 +1319,31 @@ const firebaseConfig = {
                 const tr = getAppointmentTreatments(a);
                 if (tr.length === 0) return;
                 const dateStr = new Date(a.date + 'T00:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' });
-                apptsHtml += `<div class="appt-card" style="border-left-color:${tr[0].color};">
+                const pastClass = isAppointmentPast(a) ? 'past' : '';
+                apptsHtml += `<div class="appt-card clickable ${pastClass}" style="border-left-color:${tr[0].color};" onclick="openAppointmentDetailModal('${a.id}')">
                     <div class="appt-header"><span style="color:${tr[0].color};font-weight:500;">${getTreatmentsText(a)}</span><span class="appt-badge ${a.location.toLowerCase()}">${a.location}</span></div>
-                    <div class="appt-date"><i class="fas fa-calendar"></i> ${dateStr} • ${a.time}</div>
+                    <div class="appt-date"><i class="fas fa-calendar"></i> ${dateStr} • ${a.time} <i class="fas fa-eye" style="margin-left:auto;color:var(--primary);"></i></div>
                 </div>`;
             });
+
+            const birthdayText = client.birthday ? new Date(client.birthday + 'T00:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'long' }) : '';
+            const today = new Date();
+            let birthdayInfo = '';
+            if (client.birthday) {
+                const bday = new Date(client.birthday + 'T00:00:00');
+                const nextBday = new Date(today.getFullYear(), bday.getMonth(), bday.getDate());
+                if (nextBday < today) nextBday.setFullYear(today.getFullYear() + 1);
+                const daysUntil = Math.ceil((nextBday - today) / (1000 * 60 * 60 * 24));
+                const age = today.getFullYear() - bday.getFullYear();
+                birthdayInfo = `<div class="client-detail-info"><i class="fas fa-birthday-cake"></i> ${birthdayText} (${age} anni) ${daysUntil <= 30 ? `• 🎉 Tra ${daysUntil} giorni!` : ''}</div>`;
+            }
 
             document.getElementById('client-detail-content').innerHTML = `
                 <div class="client-detail-header">
                     <div class="client-detail-name">${getClientFullName(client)} ${client.gender ? `<span style="font-size:1.3rem;">${client.gender === 'F' ? '♀' : '♂'}</span>` : ''}</div>
                     ${client.phone ? `<div class="client-detail-info"><i class="fas fa-phone"></i> ${client.phone}</div>` : ''}
                     ${client.email ? `<div class="client-detail-info"><i class="fas fa-envelope"></i> ${client.email}</div>` : ''}
+                    ${birthdayInfo}
                     ${client.address ? `<div class="client-detail-info"><i class="fas fa-map-marker-alt"></i> ${client.address}</div>` : ''}
                     ${client.notes ? `<div class="client-detail-info"><i class="fas fa-sticky-note"></i> ${client.notes}</div>` : ''}
                     <div class="client-detail-actions">
@@ -1299,7 +1353,7 @@ const firebaseConfig = {
                         <button class="btn-primary" onclick="newAppointmentForClient('${client.id}')"><i class="fas fa-plus"></i> Nuovo Appunt.</button>
                     </div>
                 </div>
-                <h3 style="margin:25px 0 15px;"><i class="fas fa-history"></i> Storico Appuntamenti</h3>
+                <h3 style="margin:25px 0 15px;"><i class="fas fa-history"></i> Storico Appuntamenti <small style="font-size:0.8rem;color:var(--muted);font-weight:400;">(tocca per modificare)</small></h3>
                 <div class="cards-container">${apptsHtml}</div>
             `;
         }
@@ -1318,6 +1372,7 @@ const firebaseConfig = {
             document.getElementById('client-name').value = client.name;
             document.getElementById('client-surname').value = client.surname || '';
             document.getElementById('client-gender').value = client.gender || '';
+            document.getElementById('client-birthday').value = client.birthday || '';
             document.getElementById('client-phone').value = client.phone || '';
             document.getElementById('client-email').value = client.email || '';
             document.getElementById('client-address').value = client.address || '';
@@ -1349,9 +1404,9 @@ const firebaseConfig = {
 
             const clientData = [
                 { 'Campo': 'Nome', 'Valore': client.name }, { 'Campo': 'Cognome', 'Valore': client.surname || '' },
-                { 'Campo': 'Sesso', 'Valore': client.gender || '' }, { 'Campo': 'Telefono', 'Valore': client.phone || '' },
-                { 'Campo': 'Email', 'Valore': client.email || '' }, { 'Campo': 'Indirizzo', 'Valore': client.address || '' },
-                { 'Campo': 'Note', 'Valore': client.notes || '' }
+                { 'Campo': 'Sesso', 'Valore': client.gender || '' }, { 'Campo': 'Compleanno', 'Valore': formatDateIT(client.birthday) || '' },
+                { 'Campo': 'Telefono', 'Valore': client.phone || '' }, { 'Campo': 'Email', 'Valore': client.email || '' },
+                { 'Campo': 'Indirizzo', 'Valore': client.address || '' }, { 'Campo': 'Note', 'Valore': client.notes || '' }
             ];
             const apptsData = clientAppts.map(a => {
                 const tr = getAppointmentTreatments(a);
@@ -1385,9 +1440,9 @@ const firebaseConfig = {
             const editId = document.getElementById('client-form-id').value;
             const data = {
                 name: document.getElementById('client-name').value.trim(), surname: document.getElementById('client-surname').value.trim(),
-                gender: document.getElementById('client-gender').value, phone: document.getElementById('client-phone').value.trim(),
-                email: document.getElementById('client-email').value.trim(), address: document.getElementById('client-address').value.trim(),
-                notes: document.getElementById('client-notes').value.trim()
+                gender: document.getElementById('client-gender').value, birthday: document.getElementById('client-birthday').value,
+                phone: document.getElementById('client-phone').value.trim(), email: document.getElementById('client-email').value.trim(),
+                address: document.getElementById('client-address').value.trim(), notes: document.getElementById('client-notes').value.trim()
             };
             await saveClient(data, editId || null);
             alert(editId ? '✅ Cliente modificato!' : '✅ Cliente aggiunto!');
@@ -1406,9 +1461,12 @@ const firebaseConfig = {
                     for (const row of jsonData) {
                         const name = (row.Nome || row.nome || '').toString().trim();
                         if (!name) continue;
+                        let birthday = (row.Compleanno || row.compleanno || '').toString().trim();
+                        if (birthday) birthday = parseDateIT(birthday);
                         await saveClient({
                             name: name, surname: (row.Cognome || row.cognome || '').toString().trim(),
-                            gender: (row.Sesso || row.sesso || '').toString().trim(), phone: (row.Telefono || row.telefono || '').toString().trim(),
+                            gender: (row.Sesso || row.sesso || '').toString().trim(), birthday: birthday,
+                            phone: (row.Telefono || row.telefono || '').toString().trim(),
                             email: (row.Email || row.email || '').toString().trim(), address: (row.Indirizzo || row.indirizzo || '').toString().trim(),
                             notes: (row.Note || row.note || '').toString().trim()
                         });
@@ -1527,7 +1585,7 @@ const firebaseConfig = {
         };
 
         window.deleteTreatmentConfirm = async function(id) {
-            if (appointments.some(a => a.treatmentIds.includes(id))) { alert('⚠️ Impossibile eliminare: ci sono appuntamenti associati.'); return; }
+            if (appointments.some(a => a.treatmentIds.includes(id))) { alert('️ Impossibile eliminare: ci sono appuntamenti associati.'); return; }
             if (confirm('Eliminare questo trattamento?')) {
                 await deleteTreatment(id);
                 renderTreatments(); populateFormSelects(); populateFilters();
@@ -1538,7 +1596,7 @@ const firebaseConfig = {
             document.getElementById('treatment-form-title').textContent = 'Nuovo Trattamento';
             document.getElementById('treatment-form').reset();
             document.getElementById('treatment-form-id').value = '';
-            document.getElementById('treatment-color').value = '#B87D7D';
+            document.getElementById('treatment-color').value = '#F4C2C2';
             document.getElementById('management-content').style.display = 'none';
             document.getElementById('treatment-form-view').style.display = 'block';
         });
@@ -1580,7 +1638,7 @@ const firebaseConfig = {
                         await saveTreatment({
                             name: name, duration: duration,
                             defaultFrequency: parseInt(row.Frequenza || row.frequenza || 30),
-                            color: (row.Colore || row.colore || '#B87D7D').toString().trim(),
+                            color: (row.Colore || row.colore || '#F4C2C2').toString().trim(),
                             desc: (row.Descrizione || row.descrizione || '').toString().trim()
                         });
                         imported++;
