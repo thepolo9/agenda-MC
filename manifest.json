@@ -1,7 +1,7 @@
 {
   "name": "Beauty Agenda",
   "short_name": "Beauty Agenda",
-  "start_url": "/",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#FAF7F5",
   "theme_color": "#B87D7D",
